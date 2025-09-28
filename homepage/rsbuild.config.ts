@@ -1,7 +1,11 @@
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
+import { pluginModuleFederation } from '@module-federation/rsbuild-plugin';
 
 export default defineConfig({
+  server: {
+    port: 3001
+  },
   plugins: [
     pluginReact(),
     pluginModuleFederation({
@@ -12,16 +16,11 @@ export default defineConfig({
       shared: {
         react: {
           singleton: true,
-          requiredVersion: '^19.1.1',
         },
         'react-dom': {
           singleton: true,
-          requiredVersion: '^19.1.1',
         },
       },
     }),
-  ],
-  server: {
-    port: 3001,
-  },
+  ]
 });

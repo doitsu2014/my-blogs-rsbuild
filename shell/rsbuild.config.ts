@@ -1,6 +1,6 @@
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
-import { pluginModuleFederation } from '@rsbuild/plugin-module-federation';
+import { pluginModuleFederation } from '@module-federation/rsbuild-plugin';
 
 export default defineConfig({
   plugins: [
@@ -9,16 +9,6 @@ export default defineConfig({
       name: 'shell',
       remotes: {
         homepage: 'homepage@http://localhost:3001/mf-manifest.json',
-      },
-      shared: {
-        react: {
-          singleton: true,
-          requiredVersion: '^19.1.1',
-        },
-        'react-dom': {
-          singleton: true,
-          requiredVersion: '^19.1.1',
-        },
       },
     }),
   ],

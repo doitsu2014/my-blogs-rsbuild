@@ -11,7 +11,6 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
-    "@module-federation/enhanced": "^0.19.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
@@ -27,6 +26,8 @@
     "globals": "^16.3.0",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.43.0"
+    "typescript-eslint": "^8.43.0",
+    "@module-federation/enhanced": "^0.19.1",
+    "@module-federation/rsbuild-plugin": "^0.19.1"
   }
 }
