@@ -21,6 +21,11 @@ const App = () => {
             element={<ModuleLoader moduleName="client_side" />}
           />
 
+          <Route
+            path="/admin_side"
+            element={<ModuleLoader moduleName="admin_side" />}
+          />
+
           {/* Catch-all route for unknown paths */}
           <Route
             path="*"
