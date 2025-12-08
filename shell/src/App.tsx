@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
 import ModuleLoader from './components/ModuleLoader';
 import './App.css';
 
@@ -7,24 +12,24 @@ const App = () => {
     <Router>
       <div className="shell-container">
         <Routes>
-          {/* Default route redirects to homepage */}
-          <Route path="/" element={<Navigate to="/homepage" replace />} />
-          
-          {/* Route to load homepage module */}
-          <Route 
-            path="/homepage" 
-            element={<ModuleLoader moduleName="homepage" />} 
+          {/* Default route redirects to client_side */}
+          <Route path="/" element={<Navigate to="/client_side" replace />} />
+
+          {/* Route to load client_side module */}
+          <Route
+            path="/client_side"
+            element={<ModuleLoader moduleName="client_side" />}
           />
-          
+
           {/* Catch-all route for unknown paths */}
-          <Route 
-            path="*" 
+          <Route
+            path="*"
             element={
               <div className="not-found">
                 <h2>Page Not Found</h2>
                 <p>The requested page could not be found.</p>
               </div>
-            } 
+            }
           />
         </Routes>
       </div>

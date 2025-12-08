@@ -21,7 +21,7 @@ The Shell is configured as a **Module Federation Host** that consumes remote mod
 pluginModuleFederation({
   name: 'shell',
   remotes: {
-    homepage: 'homepage@http://localhost:3001/mf-manifest.json',
+    client_side: 'client_side@http://localhost:3001/mf-manifest.json',
   },
 })
 ```
@@ -43,8 +43,8 @@ pluginModuleFederation({
 ### Routing Structure
 
 ```
-/ → Redirects to /homepage
-/homepage → Loads the Homepage remote module
+/ → Redirects to /client_side
+/client_side → Loads the ClientSide remote module
 /* → 404 Not Found page
 ```
 
@@ -82,7 +82,7 @@ pnpm dev
 The Shell app will be available at [http://localhost:3000](http://localhost:3000).
 
 **Important**: Before starting the Shell, ensure all required remote modules are running:
-- Homepage module: `http://localhost:3001`
+- ClientSide module: `http://localhost:3001`
 
 ### Build for Production
 
@@ -111,7 +111,7 @@ Remote modules are configured in the `remotes` section of Module Federation conf
 
 ```typescript
 remotes: {
-  homepage: 'homepage@http://localhost:3001/mf-manifest.json',
+  client_side: 'client_side@http://localhost:3001/mf-manifest.json',
 }
 ```
 
@@ -148,7 +148,7 @@ To integrate a new remote module:
    ```typescript
    // rsbuild.config.ts
    remotes: {
-     homepage: 'homepage@http://localhost:3001/mf-manifest.json',
+     client_side: 'client_side@http://localhost:3001/mf-manifest.json',
      newModule: 'newModule@http://localhost:3002/mf-manifest.json', // Add here
    }
    ```
@@ -225,7 +225,7 @@ The Shell app uses TypeScript with Module Federation type generation:
 
 ## 🔗 Related Modules
 
-- [Homepage Module](../homepage/README.md) - Remote module for the homepage feature
+- [ClientSide Module](../client_side/README.md) - Remote module for the client_side feature
 
 ---
 

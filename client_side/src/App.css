@@ -1,4 +1,4 @@
-/* Scoped styles for homepage module - avoid body selector in micro-frontends */
+/* Scoped styles for client_side module - avoid body selector in micro-frontends */
 .content {
   display: flex;
   min-height: 100vh;

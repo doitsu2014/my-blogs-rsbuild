@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [
     pluginReact(),
     pluginModuleFederation({
-      name: 'homepage',
+      name: 'client_side',
       exposes: {
         './App': './src/App.tsx',
       },

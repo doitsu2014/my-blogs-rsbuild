@@ -7,7 +7,7 @@ A modern micro-frontend architecture project built with **Module Federation 2.0*
 This project implements a micro-frontend architecture using Module Federation 2.0, consisting of:
 
 - **Shell App** (Host): The main container application running on port 3000
-- **Homepage Module** (Remote): A standalone module exposing components, running on port 3001
+- **ClientSide Module** (Remote): A standalone module exposing components, running on port 3001
 
 ### What is Module Federation?
 
@@ -39,7 +39,7 @@ my-blogs-rsbuild/
 │   │   └── types/
 │   │       └── modules.d.ts
 │   └── rsbuild.config.ts
-├── homepage/           # Remote module (port 3001)
+├── client_side/           # Remote module (port 3001)
 │   ├── src/
 │   │   └── App.tsx    # Exposed component
 │   └── rsbuild.config.ts

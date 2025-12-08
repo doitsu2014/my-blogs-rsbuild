@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react';
 
-// Lazy load the homepage module
-const HomepageApp = lazy(() => import('homepage/App'));
+// Lazy load the client_side module
+const ClientSideApp = lazy(() => import('client_side/App'));
 
 interface ModuleLoaderProps {
   moduleName: string;
@@ -10,10 +10,10 @@ interface ModuleLoaderProps {
 const ModuleLoader: React.FC<ModuleLoaderProps> = ({ moduleName }) => {
   const renderModule = () => {
     switch (moduleName) {
-      case 'homepage':
+      case 'client_side':
         return (
-          <Suspense fallback={<div>Loading Homepage...</div>}>
-            <HomepageApp />
+          <Suspense fallback={<div>Loading ClientSide...</div>}>
+            <ClientSideApp />
           </Suspense>
         );
       default:
@@ -21,11 +21,7 @@ const ModuleLoader: React.FC<ModuleLoaderProps> = ({ moduleName }) => {
     }
   };
 
-  return (
-    <div className="module-container">
-      {renderModule()}
-    </div>
-  );
+  return <div className="module-container">{renderModule()}</div>;
 };
 
 export default ModuleLoader;

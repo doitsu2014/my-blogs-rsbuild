@@ -1,10 +1,10 @@
-# Homepage Module
+# ClientSide Module
 
 A **Module Federation 2.0 Remote Module** that exposes React components for consumption by the shell application. This module demonstrates how to build and expose micro-frontend components that can be dynamically loaded at runtime.
 
 ## 📋 Overview
 
-The Homepage module is a standalone React application that serves as a **remote module** in the Module Federation architecture. It exposes components that can be consumed by other applications (like the shell app) without requiring a rebuild of the host application.
+The ClientSide module is a standalone React application that serves as a **remote module** in the Module Federation architecture. It exposes components that can be consumed by other applications (like the shell app) without requiring a rebuild of the host application.
 
 ### Key Characteristics
 
@@ -20,7 +20,7 @@ This module is configured as a **remote** in the Module Federation architecture:
 
 ```typescript
 {
-  name: 'homepage',
+  name: 'client_side',
   exposes: {
     './App': './src/App.tsx',  // Exposed component
   },
@@ -35,7 +35,7 @@ This module is configured as a **remote** in the Module Federation architecture:
 
 | Export Path | Source File   | Description             |
 | ----------- | ------------- | ----------------------- |
-| `./App`     | `src/App.tsx` | Main homepage component |
+| `./App`     | `src/App.tsx` | Main client_side component |
 
 ## 🚀 Getting Started
 
@@ -111,7 +111,7 @@ The shell application consumes this module using the manifest-based approach:
 // rsbuild.config.ts (shell)
 {
   remotes: {
-    homepage: 'homepage@http://localhost:3001/mf-manifest.json';
+    client_side: 'client_side@http://localhost:3001/mf-manifest.json';
   }
 }
 ```
@@ -121,12 +121,12 @@ The shell application consumes this module using the manifest-based approach:
 ```typescript
 import { lazy } from 'react';
 
-const HomepageApp = lazy(() => import('homepage/App'));
+const ClientSideApp = lazy(() => import('client_side/App'));
 
 function App() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <HomepageApp />
+      <ClientSideApp />
     </Suspense>
   );
 }
