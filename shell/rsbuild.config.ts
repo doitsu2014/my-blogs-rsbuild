@@ -12,6 +12,7 @@ export default defineConfig({
       name: 'shell',
       remotes: {
         'client_side': 'client_side@http://localhost:3001/mf-manifest.json',
+        'admin_side': 'admin_side@http://localhost:3002/mf-manifest.json',
       },
     }),
   ],
