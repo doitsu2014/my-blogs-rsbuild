@@ -1,9 +1,5 @@
 import { Suspense, lazy } from 'react';
 
-// Lazy load the client_side module
-const ClientSideApp = lazy(() => import('client_side/App'));
-const AdminSideApp = lazy(() => import('admin_side/App'));
-
 interface ModuleLoaderProps {
   moduleName: string;
 }
@@ -11,18 +7,22 @@ interface ModuleLoaderProps {
 const ModuleLoader: React.FC<ModuleLoaderProps> = ({ moduleName }) => {
   const renderModule = () => {
     switch (moduleName) {
-      case 'client_side':
+      case 'client_side': {
+        const ClientSideApp = lazy(() => import('client_side/App'));
         return (
           <Suspense fallback={<div>Loading ClientSide...</div>}>
             <ClientSideApp />
           </Suspense>
         );
-      case 'admin_side':
+      }
+      case 'admin_side': {
+        const AdminSideApp = lazy(() => import('admin_side/App'));
         return (
           <Suspense fallback={<div>Loading AdminSide...</div>}>
             <AdminSideApp />
           </Suspense>
         );
+      }
       default:
         return <div>Module not found: {moduleName}</div>;
     }
