@@ -1,3 +1,8 @@
+/* Import Tailwind CSS */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
 /* Scoped styles for admin_side module - avoid body selector in micro-frontends */
 .content {
   display: flex;

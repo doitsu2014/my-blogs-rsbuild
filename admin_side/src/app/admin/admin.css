@@ -1,0 +1,5 @@
+/* Admin specific styles */
+.menu-active {
+  background-color: var(--fallback-bc,oklch(var(--bc)/0.1));
+  color: var(--fallback-bc,oklch(var(--bc)/1));
+}
