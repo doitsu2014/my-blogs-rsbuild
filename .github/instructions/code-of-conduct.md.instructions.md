@@ -13,7 +13,7 @@ This project uses **Module Federation 2.0** architecture for micro-frontend impl
 
 ### Key Components:
 - **Shell App** (`/shell`): Host application that loads remote modules (port 3000)
-- **Homepage Module** (`/homepage`): Remote module that exposes components (port 3001)
+- **ClientSide Module** (`/client_side`): Remote module that exposes components (port 3001)
 
 ## Module Federation Guidelines
 
