@@ -6,6 +6,11 @@ export default defineConfig({
   server: {
     port: 3002
   },
+  source: {
+    alias: {
+      '@': './src',
+    },
+  },
   plugins: [
     pluginReact(),
     pluginModuleFederation({
