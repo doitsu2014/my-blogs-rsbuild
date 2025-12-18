@@ -8,6 +8,7 @@ This project implements a micro-frontend architecture using Module Federation 2.
 
 - **Shell App** (Host): The main container application running on port 3000
 - **ClientSide Module** (Remote): A standalone module exposing components, running on port 3001
+- **AdminSide Module** (Remote): 🚧 Admin features module (migration in progress), will run on port 3002
 
 ### What is Module Federation?
 
@@ -39,10 +40,15 @@ my-blogs-rsbuild/
 │   │   └── types/
 │   │       └── modules.d.ts
 │   └── rsbuild.config.ts
-├── client_side/           # Remote module (port 3001)
+├── client_side/        # Remote module (port 3001)
 │   ├── src/
 │   │   └── App.tsx    # Exposed component
 │   └── rsbuild.config.ts
+├── admin_side/         # 🚧 Remote module (port 3002 - in migration)
+│   ├── src/
+│   │   └── App.tsx
+│   └── rsbuild.config.ts
+├── MIGRATION_PLAN.md   # Admin features migration plan
 └── README.md
 ```
 
@@ -73,6 +79,21 @@ This architecture is ideal for:
 - [Module Federation Documentation](https://module-federation.io/guide/start/index.html)
 - [Rsbuild Documentation](https://rsbuild.dev/)
 - [Module Federation Best Practices](https://module-federation.io/practice/overview)
+
+## 🚧 Current Development
+
+### Admin Features Migration
+We are currently migrating admin features from the [old Next.js platform](https://github.com/doitsu2014/my-blogs) to the new `admin_side` module. 
+
+**Key Features Being Migrated:**
+- Categories Management (CRUD operations)
+- Blogs Management with rich text editor
+- Admin Dashboard
+- Authentication & Authorization
+
+For detailed information, see:
+- [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) - Complete migration strategy
+- [admin_side/README.md](./admin_side/README.md) - Admin module documentation
 
 ---
 
