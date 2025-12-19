@@ -1,6 +1,6 @@
 # Dependencies Installation Guide
 
-This document provides information about the dependencies added in Phase 3.
+This document provides information about the dependencies in the admin_side module.
 
 ## Installation
 
@@ -8,19 +8,25 @@ To install all dependencies, run:
 
 ```bash
 cd admin_side
-npm install
-# or
 pnpm install
-# or
-yarn install
 ```
 
 ## Added Dependencies
 
 ### Core Dependencies (Production)
 
+#### Authentication
+- **keycloak-js** (^26.0.7) - Official Keycloak JavaScript adapter for browser applications
+  - Implements Authorization Code Flow with PKCE
+  - Handles token refresh automatically
+  - Provides user info and session management
+  - See Phase 8 implementation in PHASE_8_10_IMPLEMENTATION.md
+
 #### GraphQL & Data Layer
 - **@apollo/client** (^3.12.6) - GraphQL client for React applications
+  - Configured for my-cms backend integration
+  - Automatic Keycloak Bearer token injection
+  - In-memory caching
 - **graphql** (^16.10.0) - GraphQL query language implementation
 - **graphql-tag** (^2.12.6) - GraphQL query parser
 

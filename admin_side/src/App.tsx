@@ -1,5 +1,7 @@
 import './App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './auth/AuthContext';
+import { ProtectedRoute } from './auth/ProtectedRoute';
 import AdminLayout from './app/admin/layout';
 import AdminDashboard from './app/admin/page';
 import AdminCategoriesListPage from './app/admin/categories/page';
@@ -11,20 +13,24 @@ import AdminEditBlogPage from './app/admin/blogs/edit/page';
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
-        <Route path="/admin/categories" element={<AdminLayout><AdminCategoriesListPage /></AdminLayout>} />
-        <Route path="/admin/categories/create" element={<AdminLayout><AdminCreateCategoryPage /></AdminLayout>} />
-        <Route path="/admin/categories/edit/:id" element={<AdminLayout><AdminEditCategoryPage /></AdminLayout>} />
-        <Route path="/admin/blogs" element={<AdminLayout><AdminBlogsPage /></AdminLayout>} />
-        <Route path="/admin/blogs/create" element={<AdminLayout><AdminCreateBlogPage /></AdminLayout>} />
-        <Route path="/admin/blogs/edit/:id" element={<AdminLayout><AdminEditBlogPage /></AdminLayout>} />
-        <Route path="/" element={<Navigate to="/admin" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* All admin routes are protected */}
+          <Route path="/admin" element={<ProtectedRoute><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/categories" element={<ProtectedRoute><AdminLayout><AdminCategoriesListPage /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/categories/create" element={<ProtectedRoute><AdminLayout><AdminCreateCategoryPage /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/categories/edit/:id" element={<ProtectedRoute><AdminLayout><AdminEditCategoryPage /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/blogs" element={<ProtectedRoute><AdminLayout><AdminBlogsPage /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/blogs/create" element={<ProtectedRoute><AdminLayout><AdminCreateBlogPage /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/blogs/edit/:id" element={<ProtectedRoute><AdminLayout><AdminEditBlogPage /></AdminLayout></ProtectedRoute>} />
+          <Route path="/" element={<Navigate to="/admin" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 
 export default App;
+
 
