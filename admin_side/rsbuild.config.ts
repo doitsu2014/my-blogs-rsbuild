@@ -16,7 +16,14 @@ export default defineConfig({
     pluginModuleFederation({
       name: 'admin_side',
       exposes: {
+        // Main admin application
         './App': './src/App.tsx',
+        // Admin layout for direct integration
+        './AdminLayout': './src/app/admin/layout.tsx',
+        // Admin pages for granular integration
+        './Dashboard': './src/app/admin/page.tsx',
+        './CategoriesList': './src/app/admin/categories/page.tsx',
+        './BlogsList': './src/app/admin/blogs/page.tsx',
       },
       shared: {
         react: {
@@ -26,6 +33,10 @@ export default defineConfig({
         'react-dom': {
           singleton: true,
           requiredVersion: '^19.0.0'
+        },
+        'react-router-dom': {
+          singleton: true,
+          requiredVersion: '^7.9.0'
         },
       },
     }),
