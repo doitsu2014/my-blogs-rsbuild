@@ -12,10 +12,10 @@ Authentication is now implemented using Keycloak with Authorization Code Flow + 
 **Keycloak URL**: `https://my-ids-admin.ducth.dev`
 
 **Create a Client in Keycloak Admin Console:**
-1. Navigate to your realm
+1. Navigate to your realm (e.g., `master`)
 2. Go to Clients → Create Client
 3. Configure:
-   - **Client ID**: `admin-side-client` (or your chosen ID)
+   - **Client ID**: `my-blogs-admin-localhost` (development) or your chosen ID
    - **Client Type**: Public (no client secret)
    - **Standard Flow**: Enabled
    - **Direct Access Grants**: Disabled (use standard flow only)
@@ -24,9 +24,16 @@ Authentication is now implemented using Keycloak with Authorization Code Flow + 
      - `https://your-production-domain.com/*` (production)
    - **Valid Post Logout Redirect URIs**: Same as redirect URIs
    - **Web Origins**: `+` (allows all valid redirect URIs)
-   - **PKCE**:Enable PKCE with Code Challenge Method: S256
+   - **PKCE**: Enable PKCE with Code Challenge Method: S256
 
-4. Save the client configuration
+4. **Client Scopes Configuration**:
+   - Add the following scopes to the client:
+     - `my-headless-cms-api-all` - Grants access to all my-cms API endpoints
+     - `email` - Access to user email
+     - `openid` - OpenID Connect
+     - `profile` - User profile information
+   
+5. Save the client configuration
 
 #### 2. Environment Variables
 
@@ -35,13 +42,15 @@ Create `.env.local` in `admin_side/` directory:
 ```bash
 # Keycloak Configuration
 PUBLIC_KEYCLOAK_URL=https://my-ids-admin.ducth.dev
-PUBLIC_KEYCLOAK_REALM=your-realm-name
-PUBLIC_KEYCLOAK_CLIENT_ID=admin-side-client
+PUBLIC_KEYCLOAK_REALM=master
+PUBLIC_KEYCLOAK_CLIENT_ID=my-blogs-admin-localhost
+PUBLIC_KEYCLOAK_SCOPE=my-headless-cms-api-all email openid profile
 
-# Backend API (my-cms)
-PUBLIC_GRAPHQL_API_URL=http://localhost:4000/graphql
-PUBLIC_GRAPHQL_CACHE_API_URL=http://localhost:4000/graphql
-PUBLIC_MEDIA_UPLOAD_API_URL=http://localhost:4000/api/media/upload
+# Backend API (my-cms) - https://github.com/doitsu2014/my-cms
+PUBLIC_GRAPHQL_API_URL=http://localhost:8989/graphql
+PUBLIC_GRAPHQL_CACHE_API_URL=http://localhost:8989/graphql
+PUBLIC_REST_API_URL=http://localhost:8989/api
+PUBLIC_MEDIA_UPLOAD_API_URL=http://localhost:8989/api/media/upload
 ```
 
 ### Implementation Details
@@ -112,9 +121,13 @@ All API integration points have been configured to work with the my-cms headless
 
 #### Environment Variables
 ```bash
-PUBLIC_GRAPHQL_API_URL=http://localhost:4000/graphql
-PUBLIC_GRAPHQL_CACHE_API_URL=http://localhost:4000/graphql
-PUBLIC_MEDIA_UPLOAD_API_URL=http://localhost:4000/api/media/upload
+# GraphQL API
+PUBLIC_GRAPHQL_API_URL=http://localhost:8989/graphql
+PUBLIC_GRAPHQL_CACHE_API_URL=http://localhost:8989/graphql
+
+# REST API (my-cms also provides REST endpoints)
+PUBLIC_REST_API_URL=http://localhost:8989/api
+PUBLIC_MEDIA_UPLOAD_API_URL=http://localhost:8989/api/media/upload
 ```
 
 ### Implementation Details
@@ -129,9 +142,14 @@ PUBLIC_MEDIA_UPLOAD_API_URL=http://localhost:4000/api/media/upload
    - Updated to use Keycloak tokens
    - Provides auth headers for all API requests
 
-### GraphQL API Structure (my-cms)
+### API Structure (my-cms)
 
-The my-cms backend provides the following APIs:
+The my-cms backend (https://github.com/doitsu2014/my-cms) is built with Rust and provides two types of APIs:
+
+#### 1. GraphQL API (Primary)
+The GraphQL endpoint is the recommended way to interact with my-cms. It provides a flexible, type-safe API.
+
+**GraphQL Endpoint**: `http://localhost:8989/graphql`
 
 #### Categories API
 - Query: `categories` - List all categories
@@ -154,6 +172,46 @@ The my-cms backend provides the following APIs:
 #### Tags API
 - Query: `tags` - List all tags
 - Mutation: `createTag(input: CreateTagInput!)` - Create tag
+
+---
+
+#### 2. REST API (Alternative)
+my-cms also provides RESTful endpoints for traditional HTTP operations.
+
+**REST API Base URL**: `http://localhost:8989/api`
+
+**Available REST Endpoints:**
+
+**Categories**:
+- `GET /api/categories` - List all categories
+- `GET /api/categories/:id` - Get single category
+- `POST /api/categories` - Create category
+- `PUT /api/categories/:id` - Update category
+- `DELETE /api/categories/:id` - Delete category
+
+**Posts/Blogs**:
+- `GET /api/posts` - List all posts
+- `GET /api/posts/:id` - Get single post
+- `POST /api/posts` - Create post
+- `PUT /api/posts/:id` - Update post
+- `DELETE /api/posts/:id` - Delete post
+
+**Media**:
+- `POST /api/media/upload` - Upload media file
+- `GET /api/media` - List media files
+- `GET /api/media/:id` - Get media file info
+- `DELETE /api/media/:id` - Delete media file
+
+**Tags**:
+- `GET /api/tags` - List all tags
+- `POST /api/tags` - Create tag
+
+**Authentication**: All REST API requests require the Bearer token in the Authorization header:
+```
+Authorization: Bearer <keycloak-access-token>
+```
+
+**Note**: The admin_side module primarily uses the GraphQL API, but you can also use REST endpoints if needed.
 
 ### Apollo Client Configuration
 
@@ -209,9 +267,13 @@ const { data } = await client.query({
    cargo run
    ```
 
-2. **Verify GraphQL endpoint**:
+2. **Verify backend is running**:
    ```bash
-   curl http://localhost:4000/graphql
+   # Check GraphQL endpoint
+   curl http://localhost:8989/graphql
+   
+   # Check REST API endpoint
+   curl http://localhost:8989/api/health
    ```
 
 3. **Start admin_side**:
@@ -269,10 +331,13 @@ If my-cms and admin_side are on different domains, configure CORS in my-cms:
 
 1. **Update Environment Variables**:
    ```bash
-   PUBLIC_KEYCLOAK_URL=https://your-keycloak-production.com
-   PUBLIC_KEYCLOAK_REALM=production-realm
-   PUBLIC_KEYCLOAK_CLIENT_ID=admin-side-prod
-   PUBLIC_GRAPHQL_API_URL=https://api.your-domain.com/graphql
+   PUBLIC_KEYCLOAK_URL=https://my-ids-admin.ducth.dev
+   PUBLIC_KEYCLOAK_REALM=master
+   PUBLIC_KEYCLOAK_CLIENT_ID=admin-side-production
+   PUBLIC_KEYCLOAK_SCOPE=my-headless-cms-api-all email openid profile
+   PUBLIC_GRAPHQL_API_URL=https://my-cms-api.ducth.dev/graphql
+   PUBLIC_REST_API_URL=https://my-cms-api.ducth.dev/api
+   PUBLIC_MEDIA_UPLOAD_API_URL=https://my-cms-api.ducth.dev/api/media/upload
    ```
 
 2. **Configure Keycloak Client** with production URLs

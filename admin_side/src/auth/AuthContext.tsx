@@ -29,13 +29,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [userInfo, setUserInfo] = useState<AuthContextType['userInfo']>(null);
 
   useEffect(() => {
-    // Initialize Keycloak with PKCE
+    // Initialize Keycloak with PKCE and custom scope
+    const scope = import.meta.env.PUBLIC_KEYCLOAK_SCOPE || 'my-headless-cms-api-all email openid profile';
+    
     keycloak
       .init({
         onLoad: 'check-sso', // Check SSO silently
         pkceMethod: 'S256', // Use PKCE with SHA-256
         checkLoginIframe: false, // Disable iframe for better performance
         silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+        scope: scope, // Include custom CMS API scope
       })
       .then((auth) => {
         setAuthenticated(auth);
