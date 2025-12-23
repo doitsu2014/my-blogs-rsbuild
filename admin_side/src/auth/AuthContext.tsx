@@ -39,6 +39,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         checkLoginIframe: false, // Disable iframe for better performance
         silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
         scope: scope, // Include custom CMS API scope
+        // Enable redirect mode for better handling of OAuth callbacks
+        flow: 'standard',
+        // Clean up URL after successful authentication
+        enableLogging: false,
       })
       .then((auth) => {
         setAuthenticated(auth);
@@ -46,6 +50,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (auth && keycloak.token) {
           setToken(keycloak.token);
+
+          // Clean up URL hash after successful authentication
+          if (window.location.hash) {
+            // Use history API to remove hash without triggering navigation
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
 
           // Load user info
           keycloak.loadUserInfo().then((userInfoData: any) => {
