@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
@@ -6,11 +6,9 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
-// Module-level flag to prevent multiple simultaneous login redirects
-let isLoginInProgress = false;
-
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { authenticated, loading, login } = useAuth();
+  const loginTriggered = useRef(false);
 
   // Effect to trigger login only once when needed
   useEffect(() => {
@@ -22,13 +20,28 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       hash.includes('session_state=')
     );
 
-    // If not authenticated and not processing callback and login not already triggered
-    if (!authenticated && !loading && !isProcessingCallback && !isLoginInProgress) {
-      isLoginInProgress = true;
+    // Check sessionStorage to see if we recently triggered a login
+    const lastLoginAttempt = sessionStorage.getItem('keycloak_login_attempt');
+    const now = Date.now();
+    const recentLoginAttempt = lastLoginAttempt && (now - parseInt(lastLoginAttempt)) < 30000; // 30 seconds
+
+    // If not authenticated, not loading, not processing callback, and haven't recently triggered login
+    if (!authenticated && !loading && !isProcessingCallback && !recentLoginAttempt && !loginTriggered.current) {
+      loginTriggered.current = true;
+      // Store timestamp to prevent multiple login attempts
+      sessionStorage.setItem('keycloak_login_attempt', now.toString());
       // Trigger login redirect
       login();
     }
   }, [authenticated, loading, login]);
+
+  // Clean up sessionStorage flag when authenticated
+  useEffect(() => {
+    if (authenticated) {
+      sessionStorage.removeItem('keycloak_login_attempt');
+      loginTriggered.current = false;
+    }
+  }, [authenticated]);
 
   if (loading) {
     return (
@@ -71,11 +84,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         </div>
       </div>
     );
-  }
-
-  // Reset the login flag when successfully authenticated
-  if (authenticated) {
-    isLoginInProgress = false;
   }
 
   return <>{children}</>;
