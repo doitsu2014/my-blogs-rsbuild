@@ -12,7 +12,8 @@ const config: Config = {
     require('@tailwindcss/typography'),
   ],
   daisyui: {
-    themes: ['light', 'dark'],
+    themes: ['abyss'], // Using DaisyUI's abyss theme
+    darkTheme: 'abyss', // Set abyss as the dark theme
   },
 };
 
