@@ -5,12 +5,10 @@
   "type": "module",
   "scripts": {
     "install:all": "pnpm install --recursive",
-    "dev": "concurrently \"pnpm --filter common_side dev\" \"pnpm --filter client_side dev\" \"pnpm --filter admin_side dev\"",
-    "dev:common": "pnpm --filter common_side dev",
+    "dev": "concurrently \"pnpm --filter client_side dev\" \"pnpm --filter admin_side dev\"",
     "dev:client": "pnpm --filter client_side dev",
     "dev:admin": "pnpm --filter admin_side dev",
-    "build": "pnpm --filter common_side build && pnpm --filter client_side build && pnpm --filter admin_side build",
-    "build:common": "pnpm --filter common_side build",
+    "build": "pnpm --filter client_side build && pnpm --filter admin_side build",
     "build:client": "pnpm --filter client_side build",
     "build:admin": "pnpm --filter admin_side build"
   },
@@ -18,7 +16,6 @@
     "concurrently": "^9.2.1"
   },
   "workspaces": [
-    "common_side",
     "client_side",
     "admin_side"
   ]
