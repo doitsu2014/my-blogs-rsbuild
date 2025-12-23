@@ -15,15 +15,8 @@ export default defineConfig({
     pluginReact(),
     pluginModuleFederation({
       name: 'admin_side',
-      exposes: {
-        // Main admin application
-        './App': './src/App.tsx',
-        // Admin layout for direct integration
-        './AdminLayout': './src/app/admin/layout.tsx',
-        // Admin pages for granular integration
-        './Dashboard': './src/app/admin/page.tsx',
-        './CategoriesList': './src/app/admin/categories/page.tsx',
-        './BlogsList': './src/app/admin/blogs/page.tsx',
+      remotes: {
+        common_side: 'common_side@http://localhost:3003/mf-manifest.json',
       },
       shared: {
         react: {

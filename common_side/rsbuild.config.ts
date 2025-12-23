@@ -4,14 +4,17 @@ import { pluginModuleFederation } from '@module-federation/rsbuild-plugin';
 
 export default defineConfig({
   server: {
-    port: 3001
+    port: 3003
   },
   plugins: [
     pluginReact(),
     pluginModuleFederation({
-      name: 'client_side',
-      remotes: {
-        common_side: 'common_side@http://localhost:3003/mf-manifest.json',
+      name: 'common_side',
+      exposes: {
+        './Button': './src/components/Button.tsx',
+        './Header': './src/components/Header.tsx',
+        './Footer': './src/components/Footer.tsx',
+        './LoadingSkeleton': './src/components/LoadingSkeleton.tsx',
       },
       shared: {
         react: {
