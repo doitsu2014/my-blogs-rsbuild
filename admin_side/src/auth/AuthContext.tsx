@@ -22,13 +22,26 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Track if Keycloak has been initialized to prevent multiple initializations
+let keycloakInitialized = false;
+let tokenRefreshInterval: NodeJS.Timeout | null = null;
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<AuthContextType['userInfo']>(null);
+  const initRef = React.useRef(false);
 
   useEffect(() => {
+    // Prevent double initialization (React Strict Mode in dev, or component re-mounting)
+    if (initRef.current || keycloakInitialized) {
+      return;
+    }
+    
+    initRef.current = true;
+    keycloakInitialized = true;
+    
     // Initialize Keycloak with PKCE and custom scope
     const scope = import.meta.env.PUBLIC_KEYCLOAK_SCOPE || 'my-headless-cms-api-all email openid profile';
     
@@ -66,8 +79,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             });
           });
 
-          // Setup token refresh
-          setInterval(() => {
+          // Setup token refresh (clear any existing interval first)
+          if (tokenRefreshInterval) {
+            clearInterval(tokenRefreshInterval);
+          }
+          
+          tokenRefreshInterval = setInterval(() => {
             keycloak.updateToken(70).then((refreshed) => {
               if (refreshed && keycloak.token) {
                 setToken(keycloak.token);
@@ -84,6 +101,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('Keycloak initialization failed:', error);
         setLoading(false);
       });
+    
+    // Cleanup function
+    return () => {
+      if (tokenRefreshInterval) {
+        clearInterval(tokenRefreshInterval);
+        tokenRefreshInterval = null;
+      }
+    };
   }, []);
 
   const login = () => {
