@@ -1,7 +1,6 @@
-/* Import Tailwind CSS */
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+/* Import Tailwind CSS v4 */
+@import 'tailwindcss';
+@plugin 'daisyui';
 
 /* Scoped styles for admin_side module - avoid body selector in micro-frontends */
 .content {
