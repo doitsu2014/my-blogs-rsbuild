@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
@@ -6,9 +6,29 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
+// Module-level flag to prevent multiple simultaneous login redirects
+let isLoginInProgress = false;
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { authenticated, loading, login } = useAuth();
-  const [isRedirecting, setIsRedirecting] = React.useState(false);
+
+  // Effect to trigger login only once when needed
+  useEffect(() => {
+    // Check if we're in the middle of processing an OAuth callback
+    const hash = window.location.hash;
+    const isProcessingCallback = hash && (
+      hash.includes('state=') || 
+      hash.includes('code=') || 
+      hash.includes('session_state=')
+    );
+
+    // If not authenticated and not processing callback and login not already triggered
+    if (!authenticated && !loading && !isProcessingCallback && !isLoginInProgress) {
+      isLoginInProgress = true;
+      // Trigger login redirect
+      login();
+    }
+  }, [authenticated, loading, login]);
 
   if (loading) {
     return (
@@ -23,7 +43,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (!authenticated) {
     // Check if we're in the middle of processing an OAuth callback
-    // (URL has state, code, or session_state parameters in hash)
     const hash = window.location.hash;
     const isProcessingCallback = hash && (
       hash.includes('state=') || 
@@ -43,15 +62,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       );
     }
 
-    // Only redirect to login if we're not already redirecting
-    if (!isRedirecting) {
-      setIsRedirecting(true);
-      // Use setTimeout to avoid calling login during render
-      setTimeout(() => {
-        login();
-      }, 0);
-    }
-
+    // Show redirecting message while login is being triggered
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -60,6 +71,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         </div>
       </div>
     );
+  }
+
+  // Reset the login flag when successfully authenticated
+  if (authenticated) {
+    isLoginInProgress = false;
   }
 
   return <>{children}</>;

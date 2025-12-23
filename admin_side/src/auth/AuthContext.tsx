@@ -65,10 +65,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setToken(keycloak.token);
 
           // Clean up URL hash after successful authentication
-          if (window.location.hash) {
-            // Use history API to remove hash without triggering navigation
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
-          }
+          // Add a small delay to ensure Keycloak has finished processing
+          setTimeout(() => {
+            if (window.location.hash && (
+              window.location.hash.includes('state=') ||
+              window.location.hash.includes('code=') ||
+              window.location.hash.includes('session_state=')
+            )) {
+              // Use history API to remove hash without triggering navigation
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+          }, 100);
 
           // Load user info
           keycloak.loadUserInfo().then((userInfoData: any) => {
