@@ -3,7 +3,7 @@ import { UserCircle } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 
 export default function LeftMenu() {
-  const { userInfo, logout, login, status } = useAuth();
+  const { userInfo, logout, login, authenticated } = useAuth();
   
   const userName = userInfo?.name || userInfo?.username || 'Admin User';
   const userEmail = userInfo?.email || 'admin@example.com';
@@ -36,7 +36,7 @@ export default function LeftMenu() {
         </li>
       </ul>
       <div className="">
-        {status === 'authenticated' ? (
+        {authenticated ? (
           <button className="btn btn-error w-full" onClick={logout}>
             Logout
           </button>

@@ -1,7 +1,9 @@
-import React, { ReactNode } from 'react';
-import { SessionProvider, useSession, signIn, signOut } from 'next-auth/react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import keycloak from './keycloak';
+import type Keycloak from 'keycloak-js';
 
 interface AuthContextType {
+  keycloak: Keycloak | null;
   authenticated: boolean;
   loading: boolean;
   token: string | null;
@@ -12,52 +14,106 @@ interface AuthContextType {
   } | null;
   login: () => void;
   logout: () => void;
-  status: 'authenticated' | 'unauthenticated' | 'loading';
 }
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Inner component that uses useSession
-const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  return <SessionProvider>{children}</SessionProvider>;
-};
-
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  return <AuthContextProvider>{children}</AuthContextProvider>;
-};
+  const [authenticated, setAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<AuthContextType['userInfo']>(null);
 
-export const useAuth = (): AuthContextType => {
-  const { data: session, status } = useSession();
-  
-  const authenticated = status === 'authenticated';
-  const loading = status === 'loading';
-  const token = (session as any)?.accessToken || null;
-  
-  const userInfo = session?.user
-    ? {
-        name: session.user.name || undefined,
-        email: session.user.email || undefined,
-        username: (session.user as any).username || undefined,
-      }
-    : null;
+  useEffect(() => {
+    // Initialize Keycloak with PKCE and custom scope
+    const scope = import.meta.env.PUBLIC_KEYCLOAK_SCOPE || 'my-headless-cms-api-all email openid profile';
+    
+    keycloak
+      .init({
+        onLoad: 'check-sso', // Check SSO silently
+        pkceMethod: 'S256', // Use PKCE with SHA-256
+        checkLoginIframe: false, // Disable iframe for better performance
+        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+        scope: scope, // Include custom CMS API scope
+      })
+      .then((auth) => {
+        setAuthenticated(auth);
+        setLoading(false);
+
+        if (auth && keycloak.token) {
+          setToken(keycloak.token);
+
+          // Load user info
+          keycloak.loadUserInfo().then((userInfoData: any) => {
+            setUserInfo({
+              name: userInfoData.name,
+              email: userInfoData.email,
+              username: userInfoData.preferred_username,
+            });
+          });
+
+          // Setup token refresh
+          setInterval(() => {
+            keycloak.updateToken(70).then((refreshed) => {
+              if (refreshed && keycloak.token) {
+                setToken(keycloak.token);
+                console.log('Token refreshed');
+              }
+            }).catch(() => {
+              console.error('Failed to refresh token');
+              keycloak.logout();
+            });
+          }, 60000); // Check every minute
+        }
+      })
+      .catch((error) => {
+        console.error('Keycloak initialization failed:', error);
+        setLoading(false);
+      });
+  }, []);
 
   const login = () => {
-    signIn('keycloak');
+    keycloak.login();
   };
 
   const logout = () => {
-    signOut({ callbackUrl: window.location.origin });
+    keycloak.logout({
+      redirectUri: window.location.origin,
+    });
   };
 
-  return {
+  const value: AuthContextType = {
+    keycloak,
     authenticated,
     loading,
     token,
     userInfo,
     login,
     logout,
-    status,
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg"></div>
+          <p className="mt-4 text-gray-600">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
