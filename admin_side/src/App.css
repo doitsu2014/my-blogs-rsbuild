@@ -1,6 +1,11 @@
 /* Import Tailwind CSS v4 */
 @import 'tailwindcss';
-@plugin 'daisyui';
+
+/* Configure plugins using Tailwind CSS v4 syntax */
+@plugin '@tailwindcss/typography';
+@plugin 'daisyui' {
+  themes: abyss --default --prefersdark, light, dark, dracula;
+}
 
 /* Base styles for admin_side using DaisyUI abyss theme */
 body {
