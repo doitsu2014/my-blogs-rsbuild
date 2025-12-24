@@ -5,7 +5,7 @@ export default defineConfig({
   server: {
     port: 3002
   },
-  source: {
+  resolve: {
     alias: {
       '@': './src',
     },
