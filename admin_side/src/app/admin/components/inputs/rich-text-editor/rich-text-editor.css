@@ -1,12 +1,314 @@
-.ql-code-block-container > .ql-ui option {
-  color: black;
+/* Rich Text Editor Styles - Optimized for DaisyUI Abyss Theme */
+
+.rich-text-editor-container {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Quill Editor Container */
+.quill-editor {
+  background-color: oklch(var(--b1));
+}
+
+/* Toolbar Styling for Dark Theme */
+.ql-toolbar.ql-snow {
+  background-color: oklch(var(--b2));
+  border-color: oklch(var(--b3));
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0.75rem;
+}
+
+/* Editor Content Area */
+.ql-container.ql-snow {
+  background-color: oklch(var(--b1));
+  border-color: oklch(var(--b3));
+  border-radius: 0 0 0.5rem 0.5rem;
+  min-height: 400px;
+  font-family: inherit;
+}
+
+/* Editor Content */
+.ql-editor {
+  color: oklch(var(--bc));
+  min-height: 400px;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Placeholder */
+.ql-editor.ql-blank::before {
+  color: oklch(var(--bc) / 0.5);
+  font-style: normal;
+}
+
+/* Toolbar Buttons */
+.ql-toolbar.ql-snow .ql-stroke {
+  stroke: oklch(var(--bc));
+}
+
+.ql-toolbar.ql-snow .ql-fill {
+  fill: oklch(var(--bc));
+}
+
+.ql-toolbar.ql-snow .ql-picker-label {
+  color: oklch(var(--bc));
+}
+
+/* Toolbar Button Hover */
+.ql-toolbar.ql-snow button:hover,
+.ql-toolbar.ql-snow button:focus,
+.ql-toolbar.ql-snow button.ql-active {
+  background-color: oklch(var(--p) / 0.2);
+}
+
+.ql-toolbar.ql-snow button:hover .ql-stroke,
+.ql-toolbar.ql-snow button:focus .ql-stroke,
+.ql-toolbar.ql-snow button.ql-active .ql-stroke {
+  stroke: oklch(var(--p));
+}
+
+.ql-toolbar.ql-snow button:hover .ql-fill,
+.ql-toolbar.ql-snow button:focus .ql-fill,
+.ql-toolbar.ql-snow button.ql-active .ql-fill {
+  fill: oklch(var(--p));
+}
+
+/* Dropdown Menus */
+.ql-snow .ql-picker-options {
+  background-color: oklch(var(--b2));
+  border-color: oklch(var(--b3));
+}
+
+.ql-snow .ql-picker-item:hover {
+  background-color: oklch(var(--p) / 0.2);
+  color: oklch(var(--p));
+}
+
+/* Color Picker */
+.ql-snow .ql-color-picker .ql-picker-options {
+  padding: 0.5rem;
+}
+
+/* Code Block Styling */
+.ql-code-block-container {
+  background-color: oklch(var(--b3));
+  border-radius: 0.25rem;
 }
 
 .ql-code-block-container > .ql-ui {
-  background: white;
-  color: black;
+  background-color: oklch(var(--b1));
+  color: oklch(var(--bc));
+  border: 1px solid oklch(var(--bc) / 0.2);
 }
 
-.ql-font-inter {
-  font-family: 'Inter';
+.ql-code-block-container > .ql-ui option {
+  color: oklch(var(--bc));
+}
+
+.ql-editor pre.ql-syntax {
+  background-color: oklch(var(--n));
+  color: oklch(var(--nc));
+  border-radius: 0.25rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+/* Blockquote Styling */
+.ql-editor blockquote {
+  border-left: 4px solid oklch(var(--p));
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: oklch(var(--bc) / 0.8);
+}
+
+/* Link Styling */
+.ql-editor a {
+  color: oklch(var(--p));
+  text-decoration: underline;
+}
+
+.ql-editor a:hover {
+  color: oklch(var(--pf));
+}
+
+/* Table Better Plugin Styles */
+.ql-table-better-wrapper {
+  overflow-x: auto;
+}
+
+.ql-table-better-wrapper table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ql-table-better-wrapper td,
+.ql-table-better-wrapper th {
+  border: 1px solid oklch(var(--b3));
+  padding: 0.5rem;
+}
+
+.ql-table-better-wrapper th {
+  background-color: oklch(var(--b2));
+  font-weight: 600;
+}
+
+/* Table Operation Menu */
+.qlbt-operation-menu {
+  background-color: oklch(var(--b2));
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.25rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.qlbt-operation-menu-item {
+  color: oklch(var(--bc));
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.qlbt-operation-menu-item:hover {
+  background-color: oklch(var(--p) / 0.2);
+  color: oklch(var(--p));
+}
+
+/* HTML Edit Button */
+.ql-html {
+  width: auto !important;
+}
+
+/* Fullscreen Mode */
+.ql-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: oklch(var(--b1));
+}
+
+.ql-fullscreen .ql-container {
+  height: calc(100vh - 42px) !important;
+}
+
+.ql-fullscreen .ql-editor {
+  min-height: calc(100vh - 42px);
+  max-height: calc(100vh - 42px);
+  overflow-y: auto;
+}
+
+/* Image Resize Handles */
+.img-resize-handle {
+  background-color: oklch(var(--p));
+  border: 2px solid oklch(var(--p));
+  width: 10px;
+  height: 10px;
+}
+
+/* Tooltip for Image Size Display */
+.img-size-display {
+  background-color: oklch(var(--b3));
+  color: oklch(var(--bc));
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+/* Lists */
+.ql-editor ul,
+.ql-editor ol {
+  padding-left: 1.5rem;
+}
+
+.ql-editor ul > li::before {
+  color: oklch(var(--p));
+}
+
+/* Headings */
+.ql-editor h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 1rem 0;
+}
+
+.ql-editor h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin: 0.75rem 0;
+}
+
+.ql-editor h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.ql-editor h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.ql-editor h5 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0.25rem 0;
+}
+
+.ql-editor h6 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0.25rem 0;
+}
+
+/* Images */
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+/* Video */
+.ql-editor iframe {
+  width: 100%;
+  border-radius: 0.25rem;
+  max-width: 100%;
+}
+
+/* Focus States */
+.ql-container.ql-snow:focus-within {
+  outline: 2px solid oklch(var(--p));
+  outline-offset: 2px;
+}
+
+/* Scrollbar Styling for Editor */
+.ql-editor::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ql-editor::-webkit-scrollbar-track {
+  background-color: oklch(var(--b2));
+}
+
+.ql-editor::-webkit-scrollbar-thumb {
+  background-color: oklch(var(--bc) / 0.2);
+  border-radius: 0.25rem;
+}
+
+.ql-editor::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(var(--bc) / 0.3);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .ql-toolbar.ql-snow {
+    padding: 0.5rem;
+  }
+
+  .ql-container.ql-snow {
+    min-height: 300px;
+  }
+
+  .ql-editor {
+    min-height: 300px;
+    font-size: 0.875rem;
+  }
 }

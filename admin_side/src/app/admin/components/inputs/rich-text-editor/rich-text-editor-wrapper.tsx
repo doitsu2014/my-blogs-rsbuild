@@ -1,50 +1,26 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
 import { RichTextEditorProps } from './rich-text-editor';
 
-// Lazy load the rich text editor component
+// Lazy load the rich text editor component for better performance
 const RichTextEditor = React.lazy(() => import('./rich-text-editor'));
-import React from 'react';
 
-export const RichTextEditorWrapper: React.FC<RichTextEditorProps> = ({
-  id,
-  readOnly,
-  defaultValue,
-  onTextChange,
-  onSelectionChange,
-  className
-}) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [editorDefaultValue, setEditorDefaultValue] = useState('');
-
-  useEffect(() => {
-    setIsLoading(true);
-    if (defaultValue) {
-      setTimeout(() => {
-        setEditorDefaultValue(defaultValue);
-        setIsLoading(false);
-      }, 500);
-    } else {
-      setIsLoading(false);
-    }
-  }, [defaultValue]);
-
+/**
+ * Wrapper component for the Rich Text Editor
+ * Handles lazy loading with a suspense boundary
+ */
+export const RichTextEditorWrapper: React.FC<RichTextEditorProps> = (props) => {
   return (
-    <div>
-      {isLoading ? (
-        <div className="loading loading-spinner loading-lg"></div>
-      ) : (
-        <React.Suspense fallback={<div className="loading loading-spinner loading-lg"></div>}>
-          <RichTextEditor
-            key={id}
-            id={id}
-            readOnly={readOnly}
-            defaultValue={editorDefaultValue}
-            onTextChange={onTextChange}
-            onSelectionChange={onSelectionChange}
-            className={className}
-          />
-        </React.Suspense>
-      )}
-    </div>
+    <React.Suspense
+      fallback={
+        <div className="flex justify-center items-center min-h-[400px] bg-base-200 rounded-lg">
+          <div className="flex flex-col items-center gap-3">
+            <span className="loading loading-spinner loading-lg text-primary"></span>
+            <span className="text-sm text-base-content/70">Loading editor...</span>
+          </div>
+        </div>
+      }
+    >
+      <RichTextEditor {...props} />
+    </React.Suspense>
   );
 };
