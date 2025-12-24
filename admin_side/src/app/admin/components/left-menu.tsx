@@ -87,21 +87,32 @@ export default function LeftMenu() {
   };
 
   return (
-    <aside className="w-64 bg-base-200 shadow-lg min-h-screen p-4 flex flex-col">
-      <div className="flex items-center space-x-3 py-4 px-2 bg-base-100 rounded-box shadow-md">
-        <UserCircle className="w-16 h-16 text-gray-500" />
-        <div>
-          <h2 className="text-lg font-bold">{userName}</h2>
-          <p className="text-sm text-gray-500 truncate w-40">{userEmail}</p>
+    <aside className="bg-base-200 min-h-full w-64 p-4 flex flex-col">
+      {/* User Profile Card */}
+      <div className="card bg-base-100 shadow-md mb-4">
+        <div className="card-body p-4">
+          <div className="flex items-center gap-3">
+            <div className="avatar placeholder">
+              <div className="bg-neutral text-neutral-content rounded-full w-12">
+                <UserCircle className="w-8 h-8" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-bold text-sm truncate">{userName}</h2>
+              <p className="text-xs opacity-70 truncate">{userEmail}</p>
+            </div>
+          </div>
         </div>
       </div>
-      <ul className="menu rounded-box flex-1 mt-4 w-full">
+
+      {/* Navigation Menu */}
+      <ul className="menu bg-base-200 rounded-box flex-1 w-full">
         <li>
           <MenuItem displayName="Dashboard" slug="/admin" />
         </li>
         <li>
           <details open>
-            <summary>Resources</summary>
+            <summary className="font-semibold">Resources</summary>
             <ul>
               <li>
                 <MenuItem displayName="Categories" slug="/admin/categories" />
@@ -114,11 +125,13 @@ export default function LeftMenu() {
         </li>
         <li>
           <details>
-            <summary className="text-primary font-semibold">🔐 Keycloak Test</summary>
-            <ul className="space-y-1 p-2">
+            <summary className="text-primary font-semibold">
+              <span className="mr-2">🔐</span>Keycloak Test
+            </summary>
+            <ul className="p-2 space-y-1">
               <li>
                 <button
-                  className="btn btn-xs btn-outline w-full"
+                  className="btn btn-xs btn-outline w-full justify-start"
                   onClick={handleCheckAuth}
                 >
                   Check Auth
@@ -126,7 +139,7 @@ export default function LeftMenu() {
               </li>
               <li>
                 <button
-                  className="btn btn-xs btn-outline w-full"
+                  className="btn btn-xs btn-outline w-full justify-start"
                   onClick={handleShowToken}
                 >
                   Show Token
@@ -134,7 +147,7 @@ export default function LeftMenu() {
               </li>
               <li>
                 <button
-                  className="btn btn-xs btn-outline w-full"
+                  className="btn btn-xs btn-outline w-full justify-start"
                   onClick={handleRefreshToken}
                 >
                   Refresh Token
@@ -142,7 +155,7 @@ export default function LeftMenu() {
               </li>
               <li>
                 <button
-                  className="btn btn-xs btn-outline w-full"
+                  className="btn btn-xs btn-outline w-full justify-start"
                   onClick={handleShowUserInfo}
                 >
                   Show User Info
@@ -150,7 +163,7 @@ export default function LeftMenu() {
               </li>
               <li>
                 <button
-                  className="btn btn-xs btn-outline w-full"
+                  className="btn btn-xs btn-outline w-full justify-start"
                   onClick={handleCheckTokenValidity}
                 >
                   Check Token Valid
@@ -158,7 +171,7 @@ export default function LeftMenu() {
               </li>
               <li>
                 <button
-                  className="btn btn-xs btn-outline w-full"
+                  className="btn btn-xs btn-outline w-full justify-start"
                   onClick={handleLoadUserProfile}
                 >
                   Load User Profile
@@ -166,7 +179,7 @@ export default function LeftMenu() {
               </li>
               <li>
                 <button
-                  className="btn btn-xs btn-accent w-full"
+                  className="btn btn-xs btn-accent w-full justify-start"
                   onClick={handleShowAllKeycloakInfo}
                 >
                   Show All Info
@@ -176,13 +189,15 @@ export default function LeftMenu() {
           </details>
         </li>
       </ul>
-      <div className="">
+
+      {/* Auth Button */}
+      <div className="mt-4">
         {authenticated ? (
-          <button className="btn btn-error w-full" onClick={logout}>
+          <button className="btn btn-error btn-block" onClick={logout}>
             Logout
           </button>
         ) : (
-          <button className="btn btn-primary w-full" onClick={login}>
+          <button className="btn btn-primary btn-block" onClick={login}>
             Login
           </button>
         )}
