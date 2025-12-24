@@ -1,0 +1,12 @@
+.ql-code-block-container > .ql-ui option {
+  color: black;
+}
+
+.ql-code-block-container > .ql-ui {
+  background: white;
+  color: black;
+}
+
+.ql-font-inter {
+  font-family: 'Inter';
+}
