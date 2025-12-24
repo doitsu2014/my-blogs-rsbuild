@@ -5,9 +5,11 @@ import Breadcrumbs from '../components/my-breadcrumbs';
 import TableSkeleton from '../components/skeleton/table-skeleton';
 import { TagModel } from '@/domains/tag';
 import { CategoryModel } from '@/domains/category';
-import { getApiUrl } from '@/config/api.config';
+import { getApiUrl, authenticatedFetch } from '@/config/api.config';
+import { useAuth } from '@/auth/AuthContext';
 
 export default function AdminCategoriesListPage() {
+  const { token } = useAuth();
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(
@@ -23,11 +25,12 @@ export default function AdminCategoriesListPage() {
     const loadCategories = async () => {
       try {
         setPageLoading(true);
-        const data: CategoryModel[] = await (
-          await fetch(getApiUrl('/admin/categories'), {
-            cache: 'no-store'
-          })
-        ).json();
+        const response = await authenticatedFetch(
+          getApiUrl('/admin/categories'),
+          token,
+          { cache: 'no-store' }
+        );
+        const data: CategoryModel[] = await response.json();
         setCategories(data);
       } catch (error) {
         console.error("Failed to load categories:", error);
@@ -37,7 +40,7 @@ export default function AdminCategoriesListPage() {
         setPageLoading(false);
       }
     };
-    
+
     loadCategories();
   }, []);
 
@@ -48,13 +51,15 @@ export default function AdminCategoriesListPage() {
 
   const confirmDelete = async () => {
     if (!categoryToDelete) return;
-    
+
     try {
       setIsDeleting(true);
-      const response = await fetch(getApiUrl(`/admin/categories/${categoryToDelete.id}`), {
-        method: 'DELETE',
-      });
-      
+      const response = await authenticatedFetch(
+        getApiUrl(`/admin/categories/${categoryToDelete.id}`),
+        token,
+        { method: 'DELETE' }
+      );
+
       if (response.ok) {
         // Remove deleted category from the state
         setCategories(categories.filter(c => c.id !== categoryToDelete.id));

@@ -4,9 +4,11 @@ import Breadcrumbs from '../components/my-breadcrumbs';
 import { Home, Info, Pencil, Search, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import TableSkeleton from '../components/skeleton/table-skeleton';
-import { getApiUrl } from '@/config/api.config';
+import { getApiUrl, authenticatedFetch } from '@/config/api.config';
+import { useAuth } from '@/auth/AuthContext';
 
 export default function AdminBlogsPage() {
+  const { token } = useAuth();
   const [blogs, setBlogs] = useState<PostModel[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,7 +20,7 @@ export default function AdminBlogsPage() {
     async function fetchBlogs() {
       try {
         setPageLoading(true);
-        const response = await fetch(getApiUrl('/admin/blogs'));
+        const response = await authenticatedFetch(getApiUrl('/admin/blogs'), token);
         const data = await response.json();
         // Sort blogs by createdAt in descending order
         const sortedBlogs = data.sort((a: PostModel, b: PostModel) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -44,9 +46,11 @@ export default function AdminBlogsPage() {
 
     try {
       setIsDeleting(true);
-      const response = await fetch(getApiUrl(`/admin/posts/${blogToDelete.id}`), {
-        method: 'DELETE'
-      });
+      const response = await authenticatedFetch(
+        getApiUrl(`/admin/posts/${blogToDelete.id}`),
+        token,
+        { method: 'DELETE' }
+      );
 
       if (response.ok) {
         setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog.id !== blogToDelete.id));

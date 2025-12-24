@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getMediaUploadApiUrl } from '@/config/api.config';
+import { getMediaUploadApiUrl, createAuthHeaders } from '@/config/api.config';
+import { useAuth } from '@/auth/AuthContext';
 
 interface ThumbnailsInputProps {
   onUploadSuccess: (urls: string[]) => void;
@@ -10,6 +11,7 @@ const ThumbnailsInput: React.FC<ThumbnailsInputProps> = ({
   onUploadSuccess,
   value = []
 }) => {
+  const { token } = useAuth();
   const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState('');
@@ -31,6 +33,7 @@ const ThumbnailsInput: React.FC<ThumbnailsInputProps> = ({
 
         const response = await fetch(getMediaUploadApiUrl(), {
           method: 'POST',
+          headers: createAuthHeaders(token),
           body: formData
         });
 

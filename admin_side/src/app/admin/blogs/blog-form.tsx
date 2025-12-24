@@ -6,10 +6,12 @@ import { CategoryModel } from '@/domains/category';
 import { Info, ImagePlus, Tag, BookOpen, Save, FileText } from 'lucide-react';
 import { RichTextEditorWrapper } from '../components/inputs/rich-text-editor/rich-text-editor-wrapper';
 import ThumbnailsInput from '../components/inputs/thumbnail-input';
-import { getApiUrl } from '@/config/api.config';
+import { getApiUrl, authenticatedFetch } from '@/config/api.config';
+import { useAuth } from '@/auth/AuthContext';
 
 export default function BlogForm({ id }: { id?: string }) {
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [title, setTitle] = useState('');
   const [previewContent, setPreviewContent] = useState('');
   const [content, setContent] = useState('');
@@ -26,9 +28,11 @@ export default function BlogForm({ id }: { id?: string }) {
     if (id) {
       const fetchPost = async () => {
         try {
-          const response = await fetch(getApiUrl(`/admin/posts/${id}`), {
-            cache: 'no-store'
-          });
+          const response = await authenticatedFetch(
+            getApiUrl(`/admin/posts/${id}`),
+            token,
+            { cache: 'no-store' }
+          );
           if (response && response.ok) {
             const data: PostModel = await response.json();
             setTitle(data.title);
@@ -69,7 +73,11 @@ export default function BlogForm({ id }: { id?: string }) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(getApiUrl('/admin/categories/blogs'), { cache: 'no-store' });
+        const response = await authenticatedFetch(
+          getApiUrl('/admin/categories/blogs'),
+          token,
+          { cache: 'no-store' }
+        );
         if (response.ok) {
           const data = await response.json();
           setCategories(data);
@@ -108,13 +116,17 @@ export default function BlogForm({ id }: { id?: string }) {
 
       const method = id ? 'PUT' : 'POST';
 
-      const response = await fetch(getApiUrl('/admin/posts'), {
-        method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(postData)
-      });
+      const response = await authenticatedFetch(
+        getApiUrl('/admin/posts'),
+        token,
+        {
+          method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(postData)
+        }
+      );
 
       if (response.ok) {
         navigate('/admin/blogs');

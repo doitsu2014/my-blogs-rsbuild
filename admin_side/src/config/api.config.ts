@@ -46,6 +46,56 @@ export const getApiUrl = (path: string): string => {
 };
 
 /**
+ * Create headers with authentication token
+ * @param token - JWT access token from Keycloak
+ * @param additionalHeaders - Additional headers to include
+ * @returns Headers object with Authorization
+ */
+export const createAuthHeaders = (
+  token: string | null,
+  additionalHeaders?: HeadersInit
+): HeadersInit => {
+  const headers: Record<string, string> = {
+    ...(additionalHeaders as Record<string, string>),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+};
+
+/**
+ * Authenticated fetch wrapper
+ * Automatically includes Authorization header with Bearer token
+ *
+ * @param url - API endpoint URL
+ * @param token - JWT access token from Keycloak
+ * @param options - Fetch options (method, body, headers, etc.)
+ * @returns Promise<Response>
+ *
+ * @example
+ * const response = await authenticatedFetch(
+ *   getApiUrl('/admin/blogs'),
+ *   token,
+ *   { method: 'GET' }
+ * );
+ */
+export const authenticatedFetch = async (
+  url: string,
+  token: string | null,
+  options?: RequestInit
+): Promise<Response> => {
+  const headers = createAuthHeaders(token, options?.headers);
+
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+};
+
+/**
  * API Configuration object for easy access
  */
 export const API_CONFIG = {

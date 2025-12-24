@@ -5,12 +5,14 @@ import { UpdateCategoryModel } from '@/models/UpdateCategoryModel';
 import { CreateCategoryModel } from '@/models/CreateCategoryModel';
 import { CategoryModel, CategoryTypeEnum } from '@/domains/category';
 import { TagModel } from '@/domains/tag';
-import { getApiUrl } from '@/config/api.config';
+import { getApiUrl, authenticatedFetch } from '@/config/api.config';
+import { useAuth } from '@/auth/AuthContext';
 
 const AVAILABLE_LANGUAGES = [{ code: 'vi', displayName: 'Vietnamese (vi)' }];
 
 export default function CategoryForm({ id }: { id?: string }) {
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [categoryType, setCategoryType] = useState(CategoryTypeEnum.Blog);
   const [categoryTags, setCategoryTags] = useState<{ label: string; color: string }[]>([]);
@@ -25,9 +27,11 @@ export default function CategoryForm({ id }: { id?: string }) {
     if (id) {
       const fetchCategories = async () => {
         try {
-          const response = await fetch(getApiUrl(`/admin/categories/${id}`), {
-            cache: 'no-store'
-          });
+          const response = await authenticatedFetch(
+            getApiUrl(`/admin/categories/${id}`),
+            token,
+            { cache: 'no-store' }
+          );
           if (response && response.ok) {
             const data: CategoryModel = await response.json();
             setDisplayName(data.displayName);
@@ -82,13 +86,17 @@ export default function CategoryForm({ id }: { id?: string }) {
           }))
         };
 
-        const updateResponse = await fetch(getApiUrl('/admin/categories'), {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(categoryData)
-        });
+        const updateResponse = await authenticatedFetch(
+          getApiUrl('/admin/categories'),
+          token,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(categoryData)
+          }
+        );
 
         if (updateResponse.ok) {
           navigate('/admin/categories');
@@ -107,13 +115,17 @@ export default function CategoryForm({ id }: { id?: string }) {
           }))
         };
 
-        const createResponse = await fetch(getApiUrl('/admin/categories'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(categoryData)
-        });
+        const createResponse = await authenticatedFetch(
+          getApiUrl('/admin/categories'),
+          token,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(categoryData)
+          }
+        );
 
         if (createResponse.ok) {
           navigate('/admin/categories');
