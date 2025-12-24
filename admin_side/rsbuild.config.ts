@@ -1,5 +1,7 @@
-import { defineConfig } from '@rsbuild/core';
+import { defineConfig, loadEnv } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
+
+const { publicVars } = loadEnv();
 
 export default defineConfig({
   server: {
@@ -9,6 +11,10 @@ export default defineConfig({
     alias: {
       '@': './src',
     },
+  },
+  source: {
+    // Expose PUBLIC_* environment variables to the client
+    define: publicVars,
   },
   plugins: [
     pluginReact(),

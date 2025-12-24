@@ -5,6 +5,7 @@ import Breadcrumbs from '../components/my-breadcrumbs';
 import TableSkeleton from '../components/skeleton/table-skeleton';
 import { TagModel } from '@/domains/tag';
 import { CategoryModel } from '@/domains/category';
+import { getApiUrl } from '@/config/api.config';
 
 export default function AdminCategoriesListPage() {
   const [categories, setCategories] = useState<CategoryModel[]>([]);
@@ -22,9 +23,8 @@ export default function AdminCategoriesListPage() {
     const loadCategories = async () => {
       try {
         setPageLoading(true);
-        // TODO: Replace with actual API endpoint in Phase 10
         const data: CategoryModel[] = await (
-          await fetch('/api/admin/categories', {
+          await fetch(getApiUrl('/admin/categories'), {
             cache: 'no-store'
           })
         ).json();
@@ -51,8 +51,7 @@ export default function AdminCategoriesListPage() {
     
     try {
       setIsDeleting(true);
-      // TODO: Replace with actual API endpoint in Phase 10
-      const response = await fetch(`/api/admin/categories/${categoryToDelete.id}`, {
+      const response = await fetch(getApiUrl(`/admin/categories/${categoryToDelete.id}`), {
         method: 'DELETE',
       });
       

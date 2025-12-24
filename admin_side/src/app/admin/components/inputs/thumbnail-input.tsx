@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getMediaUploadApiUrl } from '@/config/api.config';
 
 interface ThumbnailsInputProps {
   onUploadSuccess: (urls: string[]) => void;
@@ -28,8 +29,7 @@ const ThumbnailsInput: React.FC<ThumbnailsInputProps> = ({
         const formData = new FormData();
         formData.append('image', file);
 
-        // TODO: Update this endpoint when API routes are implemented in Phase 10
-        const response = await fetch('/api/admin/media/images', {
+        const response = await fetch(getMediaUploadApiUrl(), {
           method: 'POST',
           body: formData
         });

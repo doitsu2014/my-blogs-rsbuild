@@ -5,6 +5,7 @@ import { UpdateCategoryModel } from '@/models/UpdateCategoryModel';
 import { CreateCategoryModel } from '@/models/CreateCategoryModel';
 import { CategoryModel, CategoryTypeEnum } from '@/domains/category';
 import { TagModel } from '@/domains/tag';
+import { getApiUrl } from '@/config/api.config';
 
 const AVAILABLE_LANGUAGES = [{ code: 'vi', displayName: 'Vietnamese (vi)' }];
 
@@ -24,8 +25,7 @@ export default function CategoryForm({ id }: { id?: string }) {
     if (id) {
       const fetchCategories = async () => {
         try {
-          // TODO: Replace with actual API endpoint in Phase 10
-          const response = await fetch(`/api/admin/categories/${id}`, {
+          const response = await fetch(getApiUrl(`/admin/categories/${id}`), {
             cache: 'no-store'
           });
           if (response && response.ok) {
@@ -82,8 +82,7 @@ export default function CategoryForm({ id }: { id?: string }) {
           }))
         };
 
-        // TODO: Replace with actual API endpoint in Phase 10
-        const updateResponse = await fetch(`/api/admin/categories`, {
+        const updateResponse = await fetch(getApiUrl('/admin/categories'), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
@@ -108,8 +107,7 @@ export default function CategoryForm({ id }: { id?: string }) {
           }))
         };
 
-        // TODO: Replace with actual API endpoint in Phase 10
-        const createResponse = await fetch(`/api/admin/categories`, {
+        const createResponse = await fetch(getApiUrl('/admin/categories'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

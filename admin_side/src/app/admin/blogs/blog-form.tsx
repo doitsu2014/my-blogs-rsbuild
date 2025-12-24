@@ -6,6 +6,7 @@ import { CategoryModel } from '@/domains/category';
 import { Info, ImagePlus, Tag, BookOpen, Save, FileText } from 'lucide-react';
 import { RichTextEditorWrapper } from '../components/inputs/rich-text-editor/rich-text-editor-wrapper';
 import ThumbnailsInput from '../components/inputs/thumbnail-input';
+import { getApiUrl } from '@/config/api.config';
 
 export default function BlogForm({ id }: { id?: string }) {
   const navigate = useNavigate();
@@ -25,8 +26,7 @@ export default function BlogForm({ id }: { id?: string }) {
     if (id) {
       const fetchPost = async () => {
         try {
-          // TODO: Replace with actual API endpoint in Phase 10
-          const response = await fetch(`/api/admin/posts/${id}`, {
+          const response = await fetch(getApiUrl(`/admin/posts/${id}`), {
             cache: 'no-store'
           });
           if (response && response.ok) {
@@ -69,8 +69,7 @@ export default function BlogForm({ id }: { id?: string }) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // TODO: Replace with actual API endpoint in Phase 10
-        const response = await fetch('/api/admin/categories/blogs', { cache: 'no-store' });
+        const response = await fetch(getApiUrl('/admin/categories/blogs'), { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           setCategories(data);
@@ -108,10 +107,8 @@ export default function BlogForm({ id }: { id?: string }) {
       };
 
       const method = id ? 'PUT' : 'POST';
-      const endpoint = '/api/admin/posts';
 
-      // TODO: Replace with actual API endpoint in Phase 10
-      const response = await fetch(endpoint, {
+      const response = await fetch(getApiUrl('/admin/posts'), {
         method,
         headers: {
           'Content-Type': 'application/json'

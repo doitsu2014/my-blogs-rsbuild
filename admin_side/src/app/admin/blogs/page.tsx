@@ -4,6 +4,7 @@ import Breadcrumbs from '../components/my-breadcrumbs';
 import { Home, Info, Pencil, Search, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import TableSkeleton from '../components/skeleton/table-skeleton';
+import { getApiUrl } from '@/config/api.config';
 
 export default function AdminBlogsPage() {
   const [blogs, setBlogs] = useState<PostModel[]>([]);
@@ -17,8 +18,7 @@ export default function AdminBlogsPage() {
     async function fetchBlogs() {
       try {
         setPageLoading(true);
-        // TODO: Replace with actual API endpoint in Phase 10
-        const response = await fetch('/api/admin/blogs');
+        const response = await fetch(getApiUrl('/admin/blogs'));
         const data = await response.json();
         // Sort blogs by createdAt in descending order
         const sortedBlogs = data.sort((a: PostModel, b: PostModel) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -44,8 +44,7 @@ export default function AdminBlogsPage() {
 
     try {
       setIsDeleting(true);
-      // TODO: Replace with actual API endpoint in Phase 10
-      const response = await fetch(`/api/admin/posts/${blogToDelete.id}`, {
+      const response = await fetch(getApiUrl(`/admin/posts/${blogToDelete.id}`), {
         method: 'DELETE'
       });
 
