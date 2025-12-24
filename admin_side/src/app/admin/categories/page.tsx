@@ -236,33 +236,34 @@ export default function AdminCategoriesListPage() {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-base-100 p-6 rounded-lg shadow-xl max-w-md w-full">
-            <h3 className="text-lg font-bold mb-4">Confirm Deletion</h3>
-            <p className="mb-6">
-              Are you sure you want to delete the category "{categoryToDelete?.displayName}"? 
-              This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button 
-                className="btn btn-outline" 
-                onClick={cancelDelete}
-                disabled={isDeleting}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-error" 
-                onClick={confirmDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
+      <dialog className={`modal ${isDeleteModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="text-lg font-bold">Confirm Deletion</h3>
+          <p className="py-4">
+            Are you sure you want to delete the category "{categoryToDelete?.displayName}"? 
+            This action cannot be undone.
+          </p>
+          <div className="modal-action">
+            <button 
+              className="btn btn-outline" 
+              onClick={cancelDelete}
+              disabled={isDeleting}
+            >
+              Cancel
+            </button>
+            <button 
+              className="btn btn-error" 
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </button>
           </div>
         </div>
-      )}
+        <form method="dialog" className="modal-backdrop" onClick={cancelDelete}>
+          <button type="button">close</button>
+        </form>
+      </dialog>
     </div>
   );
 }

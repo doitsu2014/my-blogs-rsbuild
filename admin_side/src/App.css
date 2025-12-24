@@ -1,8 +1,12 @@
 /* Import Tailwind CSS v4 */
 @import 'tailwindcss';
-@plugin 'daisyui';
+@plugin '@tailwindcss/typography';
+@plugin 'daisyui' {
+  themes: light --default, dark, abyss --prefersdark;
+  logs: false;
+}
 
-/* Base styles for admin_side using DaisyUI abyss theme */
+/* Base styles for admin_side using DaisyUI themes */
 body {
   margin: 0;
   padding: 0;

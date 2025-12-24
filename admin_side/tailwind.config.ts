@@ -1,20 +1,4 @@
-import type { Config } from 'tailwindcss';
-
-const config: Config = {
-  content: [
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [
-    require('daisyui'),
-    require('@tailwindcss/typography'),
-  ],
-  daisyui: {
-    themes: ['abyss'], // Using DaisyUI's abyss theme
-    darkTheme: 'abyss', // Set abyss as the dark theme
-  },
-};
-
-export default config;
+// Tailwind CSS 4 uses CSS-based configuration
+// See src/App.css for theme configuration with @plugin syntax
+// This file is kept minimal for compatibility
+export default {};
