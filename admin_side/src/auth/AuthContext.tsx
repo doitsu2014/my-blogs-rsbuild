@@ -43,15 +43,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     keycloakInitialized = true;
     
     // Initialize Keycloak with PKCE and custom scope
-    const scope = import.meta.env.PUBLIC_KEYCLOAK_SCOPE || 'my-headless-cms-api-all email openid profile';
-    
+    // IMPORTANT: Include 'offline_access' to get refresh tokens
+    const baseScope = import.meta.env.PUBLIC_KEYCLOAK_SCOPE || 'my-headless-cms-api-all email openid profile';
+    const scope = baseScope.includes('offline_access') ? baseScope : `${baseScope} offline_access`;
+
     keycloak
       .init({
         onLoad: 'check-sso', // Check SSO silently
         pkceMethod: 'S256', // Use PKCE with SHA-256
         checkLoginIframe: false, // Disable iframe for better performance
         silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-        scope: scope, // Include custom CMS API scope
+        scope: scope, // Include custom CMS API scope + offline_access for refresh tokens
         // Enable redirect mode for better handling of OAuth callbacks
         flow: 'standard',
         // Clean up URL after successful authentication
@@ -101,7 +103,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               console.error('Failed to refresh token');
               keycloak.logout();
             });
-          }, 60000); // Check every minute
+          }, 60 * 1000); // Check every minute
         }
       })
       .catch((error) => {
@@ -119,7 +121,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = () => {
-    keycloak.login();
+    // Ensure we request offline_access scope for refresh tokens
+    const baseScope = import.meta.env.PUBLIC_KEYCLOAK_SCOPE || 'my-headless-cms-api-all email openid profile';
+    const scope = baseScope.includes('offline_access') ? baseScope : `${baseScope} offline_access`;
+
+    keycloak.login({
+      scope: scope,
+    });
   };
 
   const logout = () => {
