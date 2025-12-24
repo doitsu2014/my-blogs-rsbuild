@@ -37,15 +37,16 @@ The `admin_side` module is a micro-frontend application built with **Rsbuild** a
 
 ## Technology Stack
 
-- **Framework**: React 19.1.x
-- **Build Tool**: Rsbuild 1.5.x
+- **Framework**: React 19.2.x
+- **Build Tool**: Rsbuild 1.6.x
 - **Language**: TypeScript 5.9.x
-- **Module Federation**: @module-federation/enhanced 0.21.6
-- **UI Framework**: DaisyUI v5 + Tailwind CSS (planned)
-- **Rich Text Editor**: Quill 2.0 (planned)
-- **Data Layer**: Apollo Client + GraphQL (planned)
-- **Authentication**: next-auth v5 (planned, may be adapted)
-- **Icons**: lucide-react (planned)
+- **Module Federation**: @module-federation/enhanced (configured)
+- **UI Framework**: DaisyUI v5.5 + Tailwind CSS v4.1
+- **Rich Text Editor**: Quill 2.0
+- **Data Layer**: Apollo Client + GraphQL
+- **Authentication**: Keycloak JS 26.x
+- **Icons**: lucide-react
+- **Typography**: @tailwindcss/typography
 
 ## Architecture
 
