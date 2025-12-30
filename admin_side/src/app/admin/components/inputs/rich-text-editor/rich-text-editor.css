@@ -10,9 +10,9 @@
   background-color: oklch(var(--b1));
 }
 
-/* Toolbar Styling for Dark Theme */
+/* Toolbar Styling */
 .ql-toolbar.ql-snow {
-  background-color: oklch(var(--b2));
+  background-color: #ffffff;
   border-color: oklch(var(--b3));
   border-radius: 0.5rem 0.5rem 0 0;
   padding: 0.75rem;
@@ -20,7 +20,7 @@
 
 /* Editor Content Area */
 .ql-container.ql-snow {
-  background-color: oklch(var(--b1));
+  background-color: #ffffff;
   border-color: oklch(var(--b3));
   border-radius: 0 0 0.5rem 0.5rem;
   min-height: 400px;
@@ -29,7 +29,8 @@
 
 /* Editor Content */
 .ql-editor {
-  color: oklch(var(--bc));
+  background-color: #ffffff;
+  color: #000000;
   min-height: 400px;
   font-size: 1rem;
   line-height: 1.6;
@@ -43,15 +44,15 @@
 
 /* Toolbar Buttons */
 .ql-toolbar.ql-snow .ql-stroke {
-  stroke: oklch(var(--bc));
+  stroke: #444444;
 }
 
 .ql-toolbar.ql-snow .ql-fill {
-  fill: oklch(var(--bc));
+  fill: #444444;
 }
 
 .ql-toolbar.ql-snow .ql-picker-label {
-  color: oklch(var(--bc));
+  color: #444444;
 }
 
 /* Toolbar Button Hover */
@@ -75,7 +76,7 @@
 
 /* Dropdown Menus */
 .ql-snow .ql-picker-options {
-  background-color: oklch(var(--b2));
+  background-color: #ffffff;
   border-color: oklch(var(--b3));
 }
 

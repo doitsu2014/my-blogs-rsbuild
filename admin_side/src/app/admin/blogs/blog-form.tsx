@@ -6,7 +6,7 @@ import MultiChipInput, {
   getRandomColor,
 } from '../components/inputs/multi-chip-input';
 import { Info, ImagePlus, Tag, BookOpen, Save, FileText } from 'lucide-react';
-import { RichTextEditorWrapper } from '../components/inputs/rich-text-editor/rich-text-editor-wrapper';
+import { RichTextEditor } from '../components/inputs/rich-text-editor/rich-text-editor';
 import ThumbnailsInput from '../components/inputs/thumbnail-input';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
@@ -306,7 +306,7 @@ export default function BlogForm({ id }: { id?: string }) {
             className="form-control w-full bg-base-100 rounded-md border border-base-300"
             key="main-editor"
           >
-            <RichTextEditorWrapper
+            <RichTextEditor
               key={`editor-${id}`}
               id="content-editor"
               defaultValue={originalContent}

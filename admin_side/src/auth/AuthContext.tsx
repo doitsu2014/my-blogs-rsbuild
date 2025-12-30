@@ -51,8 +51,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       .init({
         onLoad: 'check-sso', // Check SSO silently
         pkceMethod: 'S256', // Use PKCE with SHA-256
-        checkLoginIframe: false, // Disable iframe for better performance
-        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+        checkLoginIframe: false, // Disable iframe for better performance and compatibility
         scope: scope, // Include custom CMS API scope + offline_access for refresh tokens
         // Enable redirect mode for better handling of OAuth callbacks
         flow: 'standard',

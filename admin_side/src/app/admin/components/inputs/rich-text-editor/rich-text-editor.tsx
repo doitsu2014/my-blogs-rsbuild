@@ -1,4 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+
+// highlight.js is loaded globally via init-highlight.ts pre-entry
+// No need to import it here
+
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import './rich-text-editor.css';
@@ -10,10 +14,6 @@ import htmlEditButton from 'quill-html-edit-button';
 import ImageResize from 'quill-resize-image';
 // @ts-ignore - No types available
 import QuillFullscreen from 'quill-toggle-fullscreen-button';
-
-// Import highlight.js for code syntax highlighting
-import hljs from 'highlight.js';
-import 'highlight.js/styles/atom-one-dark.css';
 
 // Register Quill modules
 Quill.register('modules/table-better', QuillTableBetter);
@@ -31,7 +31,7 @@ export interface RichTextEditorProps {
   className?: string;
 }
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({
+export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   id,
   readOnly = false,
   defaultValue = '',
@@ -39,21 +39,20 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   onSelectionChange,
   className
 }) => {
-  const editorRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<Quill | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (!editorRef.current || isInitialized) return;
+    if (!containerRef.current || quillRef.current) return;
 
-    // Quill configuration
-    const quill = new Quill(editorRef.current, {
+    const editorDiv = document.createElement('div');
+    containerRef.current.appendChild(editorDiv);
+
+    const quill = new Quill(editorDiv, {
       theme: 'snow',
       readOnly,
       modules: {
-        syntax: {
-          highlight: (text: string) => hljs.highlightAuto(text).value,
-        },
+        syntax: true,
         toolbar: {
           container: [
             [{ header: [1, 2, 3, 4, 5, 6, false] }],
@@ -94,54 +93,45 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           buttonTitle: 'Edit HTML',
           syntax: false,
         },
-        fullscreen: {
-          // Fullscreen module options
-        },
+        fullscreen: {},
       },
     });
 
     quillRef.current = quill;
-    setIsInitialized(true);
 
-    // Set initial content
     if (defaultValue) {
       quill.root.innerHTML = defaultValue;
     }
 
-    // Handle text changes
     quill.on('text-change', () => {
-      const html = quill.root.innerHTML;
       if (onTextChange) {
-        onTextChange(html);
+        onTextChange(quill.root.innerHTML);
       }
     });
 
-    // Handle selection changes
     if (onSelectionChange) {
       quill.on('selection-change', (...args) => {
         onSelectionChange(...args);
       });
     }
 
-    // Cleanup
     return () => {
-      if (quillRef.current) {
-        quillRef.current = null;
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
       }
+      quillRef.current = null;
     };
   }, []);
 
-  // Update content when defaultValue changes
   useEffect(() => {
-    if (quillRef.current && isInitialized && defaultValue !== undefined) {
+    if (quillRef.current && defaultValue !== undefined) {
       const currentContent = quillRef.current.root.innerHTML;
       if (currentContent !== defaultValue) {
         quillRef.current.root.innerHTML = defaultValue;
       }
     }
-  }, [defaultValue, isInitialized]);
+  }, [defaultValue]);
 
-  // Update readOnly state
   useEffect(() => {
     if (quillRef.current) {
       quillRef.current.enable(!readOnly);
@@ -149,9 +139,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, [readOnly]);
 
   return (
-    <div className={`rich-text-editor-container ${className || ''}`} id={id}>
-      <div ref={editorRef} className="quill-editor" />
-    </div>
+    <div
+      ref={containerRef}
+      className={`rich-text-editor-container ${className || ''}`}
+      id={id}
+    />
   );
 };
 

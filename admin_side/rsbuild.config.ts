@@ -15,6 +15,8 @@ export default defineConfig({
   source: {
     // Expose PUBLIC_* environment variables to the client
     define: publicVars,
+    // Pre-entry to load highlight.js globally before main app
+    preEntry: ['./src/init-highlight.ts'],
   },
   plugins: [
     pluginReact(),
