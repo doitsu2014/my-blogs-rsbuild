@@ -77,7 +77,7 @@ export const createAuthHeaders = (
  *
  * @example
  * const response = await authenticatedFetch(
- *   getApiUrl('/admin/blogs'),
+ *   getApiUrl('/posts?categoryType=Blog'),
  *   token,
  *   { method: 'GET' }
  * );

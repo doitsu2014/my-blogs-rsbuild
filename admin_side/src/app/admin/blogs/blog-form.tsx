@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PostModel } from '@/domains/post';
-import MultiChipInput, { getRandomColor } from '../components/inputs/multi-chip-input';
-import { CategoryModel } from '@/domains/category';
+import type { PostModel } from '@/domains/post';
+import type { CategoryModel } from '@/domains/category';
+import MultiChipInput, {
+  getRandomColor,
+} from '../components/inputs/multi-chip-input';
 import { Info, ImagePlus, Tag, BookOpen, Save, FileText } from 'lucide-react';
 import { RichTextEditorWrapper } from '../components/inputs/rich-text-editor/rich-text-editor-wrapper';
 import ThumbnailsInput from '../components/inputs/thumbnail-input';
@@ -29,26 +31,26 @@ export default function BlogForm({ id }: { id?: string }) {
       const fetchPost = async () => {
         try {
           const response = await authenticatedFetch(
-            getApiUrl(`/admin/posts/${id}`),
+            getApiUrl(`/posts/${id}`),
             token,
-            { cache: 'no-store' }
+            { cache: 'no-store' },
           );
           if (response && response.ok) {
-            const data: PostModel = await response.json();
-            setTitle(data.title);
-            setPreviewContent(data.previewContent);
-            setContent(data.content);
-            setOriginalContent(data.content);
-            setThumbnailPaths(data.thumbnailPaths);
-            setPublished(data.published);
-            setRowVersion(data.rowVersion);
+            const res: { data: PostModel } = await response.json();
+            setTitle(res.data.title);
+            setPreviewContent(res.data.previewContent);
+            setContent(res.data.content);
+            setOriginalContent(res.data.content);
+            setThumbnailPaths(res.data.thumbnailPaths);
+            setPublished(res.data.published);
+            setRowVersion(res.data.rowVersion);
             setTags(
-              data.postTags.map((tag) => ({
+              res.data.postTags.map((tag) => ({
                 label: tag.name,
-                color: getRandomColor()
-              }))
+                color: getRandomColor(),
+              })),
             );
-            setSelectedCategoryId(data.categoryId);
+            setSelectedCategoryId(res.data.categoryId);
           }
         } catch (error) {
           console.error('Error fetching post:', error);
@@ -74,9 +76,9 @@ export default function BlogForm({ id }: { id?: string }) {
     const fetchCategories = async () => {
       try {
         const response = await authenticatedFetch(
-          getApiUrl('/admin/categories/blogs'),
+          getApiUrl('/posts?categoryType=Blog'),
           token,
-          { cache: 'no-store' }
+          { cache: 'no-store' },
         );
         if (response.ok) {
           const data = await response.json();
@@ -111,22 +113,18 @@ export default function BlogForm({ id }: { id?: string }) {
         published,
         rowVersion,
         tagNames: tags.map((tag) => tag.label),
-        categoryId: selectedCategoryId
+        categoryId: selectedCategoryId,
       };
 
       const method = id ? 'PUT' : 'POST';
 
-      const response = await authenticatedFetch(
-        getApiUrl('/admin/posts'),
-        token,
-        {
-          method,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(postData)
-        }
-      );
+      const response = await authenticatedFetch(getApiUrl('/posts'), token, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postData),
+      });
 
       if (response.ok) {
         navigate('/admin/blogs');
@@ -145,7 +143,10 @@ export default function BlogForm({ id }: { id?: string }) {
   };
 
   return (
-    <form onSubmit={submitHandler} className="flex flex-col space-y-4 max-w-6xl mx-auto">
+    <form
+      onSubmit={submitHandler}
+      className="flex flex-col space-y-4 max-w-6xl mx-auto"
+    >
       {/* Basic Information */}
       <div className="card bg-base-200 shadow-sm">
         <div className="card-body p-4">
@@ -180,7 +181,8 @@ export default function BlogForm({ id }: { id?: string }) {
               name="category"
               required
               value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}>
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+            >
               <option value="" disabled>
                 Select a category
               </option>
@@ -192,7 +194,9 @@ export default function BlogForm({ id }: { id?: string }) {
             </select>
             {categories.length === 0 && (
               <div className="label">
-                <span className="label-text-alt text-error">No categories available</span>
+                <span className="label-text-alt text-error">
+                  No categories available
+                </span>
               </div>
             )}
           </label>
@@ -209,7 +213,9 @@ export default function BlogForm({ id }: { id?: string }) {
                 onChange={(e) => setPublished(e.target.checked)}
                 disabled={loading}
               />
-              <span className="label-text">{published ? 'Published' : 'Draft'}</span>
+              <span className="label-text">
+                {published ? 'Published' : 'Draft'}
+              </span>
             </label>
           </div>
         </div>
@@ -222,7 +228,10 @@ export default function BlogForm({ id }: { id?: string }) {
             <ImagePlus size={18} />
             Thumbnails
           </h3>
-          <ThumbnailsInput value={thumbnailPaths} onUploadSuccess={handleThumbnailUploadSuccess} />
+          <ThumbnailsInput
+            value={thumbnailPaths}
+            onUploadSuccess={handleThumbnailUploadSuccess}
+          />
         </div>
       </div>
 
@@ -245,8 +254,8 @@ export default function BlogForm({ id }: { id?: string }) {
                 setTags(
                   chips.map((chip) => ({
                     label: chip.label.toLowerCase(),
-                    color: chip.color
-                  }))
+                    color: chip.color,
+                  })),
                 );
               }}
               className="flex flex-wrap border border-base-300 rounded-md p-2 min-h-16 bg-base-200"
@@ -268,7 +277,9 @@ export default function BlogForm({ id }: { id?: string }) {
           <label className="form-control w-full">
             <div className="label">
               <span className="label-text font-medium">Short Preview</span>
-              <span className="label-text-alt">This will appear in blog lists</span>
+              <span className="label-text-alt">
+                This will appear in blog lists
+              </span>
             </div>
             <textarea
               value={previewContent}
@@ -293,7 +304,8 @@ export default function BlogForm({ id }: { id?: string }) {
 
           <div
             className="form-control w-full bg-base-100 rounded-md border border-base-300"
-            key="main-editor">
+            key="main-editor"
+          >
             <RichTextEditorWrapper
               key={`editor-${id}`}
               id="content-editor"
@@ -316,10 +328,15 @@ export default function BlogForm({ id }: { id?: string }) {
               type="button"
               className="btn btn-ghost"
               onClick={() => navigate('/admin/blogs')}
-              disabled={loading}>
+              disabled={loading}
+            >
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
               {loading ? (
                 <>
                   <span className="loading loading-spinner loading-sm"></span>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PostModel } from '@/domains/post';
+import type { PostModel } from '@/domains/post';
 import Breadcrumbs from '../components/my-breadcrumbs';
 import { Home, Info, Pencil, Search, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -20,7 +20,7 @@ export default function AdminBlogsPage() {
     async function fetchBlogs() {
       try {
         setPageLoading(true);
-        const response = await authenticatedFetch(getApiUrl('/admin/blogs'), token);
+        const response = await authenticatedFetch(getApiUrl('/posts?categoryType=Blog'), token);
         const data = await response.json();
         // Sort blogs by createdAt in descending order
         const sortedBlogs = data.sort((a: PostModel, b: PostModel) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

@@ -26,12 +26,13 @@ export default function AdminCategoriesListPage() {
       try {
         setPageLoading(true);
         const response = await authenticatedFetch(
-          getApiUrl('/admin/categories'),
+          getApiUrl('/categories'),
           token,
           { cache: 'no-store' }
         );
-        const data: CategoryModel[] = await response.json();
-        setCategories(data);
+        const res: { data: CategoryModel[] } = await response.json();
+        console.log(res);
+        setCategories(res.data);
       } catch (error) {
         console.error("Failed to load categories:", error);
         // For now, set empty array if API not available
@@ -197,7 +198,7 @@ export default function AdminCategoriesListPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredCategories.map((category) => (
+              {filteredCategories?.map((category) => (
                 <tr key={category.id} className="hover:bg-base-200 transition-all">
                   <td className="p-3 font-semibold">{category.displayName}</td>
                   <td className="p-3 text-gray-500">{category.slug}</td>

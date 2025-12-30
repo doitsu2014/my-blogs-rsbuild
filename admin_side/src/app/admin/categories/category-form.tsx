@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MultiChipInput, { getRandomColor } from '../components/inputs/multi-chip-input';
-import { UpdateCategoryModel } from '@/models/UpdateCategoryModel';
-import { CreateCategoryModel } from '@/models/CreateCategoryModel';
-import { CategoryModel, CategoryTypeEnum } from '@/domains/category';
-import { TagModel } from '@/domains/tag';
+import MultiChipInput, {
+  getRandomColor,
+} from '../components/inputs/multi-chip-input';
+import type { UpdateCategoryModel } from '@/models/UpdateCategoryModel';
+import type { CreateCategoryModel } from '@/models/CreateCategoryModel';
+import { CategoryTypeEnum, type CategoryModel } from '@/domains/category';
+import type { TagModel } from '@/domains/tag';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
 
@@ -15,7 +17,9 @@ export default function CategoryForm({ id }: { id?: string }) {
   const { token } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [categoryType, setCategoryType] = useState(CategoryTypeEnum.Blog);
-  const [categoryTags, setCategoryTags] = useState<{ label: string; color: string }[]>([]);
+  const [categoryTags, setCategoryTags] = useState<
+    { label: string; color: string }[]
+  >([]);
   const [rowVersion, setRowVersion] = useState(0);
   const [loading, setLoading] = useState(false);
   const [categoryTranslations, setCategoryTranslations] = useState<
@@ -28,9 +32,9 @@ export default function CategoryForm({ id }: { id?: string }) {
       const fetchCategories = async () => {
         try {
           const response = await authenticatedFetch(
-            getApiUrl(`/admin/categories/${id}`),
+            getApiUrl(`/categories/${id}`),
             token,
-            { cache: 'no-store' }
+            { cache: 'no-store' },
           );
           if (response && response.ok) {
             const data: CategoryModel = await response.json();
@@ -39,13 +43,13 @@ export default function CategoryForm({ id }: { id?: string }) {
             setCategoryTags(
               data.categoryTags.map((tag: TagModel) => ({
                 label: tag.name,
-                color: getRandomColor()
-              }))
+                color: getRandomColor(),
+              })),
             );
             setCategoryTranslations(
               data.categoryTranslations.map((ct) => ({
-                ...ct
-              }))
+                ...ct,
+              })),
             );
             setRowVersion(data.rowVersion);
           }
@@ -82,20 +86,20 @@ export default function CategoryForm({ id }: { id?: string }) {
           translations: categoryTranslations.map((translation) => ({
             displayName: translation.displayName,
             id: translation.id || undefined,
-            languageCode: translation.languageCode
-          }))
+            languageCode: translation.languageCode,
+          })),
         };
 
         const updateResponse = await authenticatedFetch(
-          getApiUrl('/admin/categories'),
+          getApiUrl('/categories'),
           token,
           {
             method: 'PUT',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
             },
-            body: JSON.stringify(categoryData)
-          }
+            body: JSON.stringify(categoryData),
+          },
         );
 
         if (updateResponse.ok) {
@@ -111,20 +115,20 @@ export default function CategoryForm({ id }: { id?: string }) {
           tagNames: categoryTags.map((tag) => tag.label),
           translations: categoryTranslations.map((translation) => ({
             displayName: translation.displayName,
-            languageCode: translation.languageCode
-          }))
+            languageCode: translation.languageCode,
+          })),
         };
 
         const createResponse = await authenticatedFetch(
-          getApiUrl('/admin/categories'),
+          getApiUrl('/categories'),
           token,
           {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
             },
-            body: JSON.stringify(categoryData)
-          }
+            body: JSON.stringify(categoryData),
+          },
         );
 
         if (createResponse.ok) {
@@ -143,23 +147,24 @@ export default function CategoryForm({ id }: { id?: string }) {
   const addTranslationTab = () => {
     setCategoryTranslations([
       ...categoryTranslations,
-      { id: '', languageCode: '', displayName: '' }
+      { id: '', languageCode: '', displayName: '' },
     ]);
   };
 
   const isAddTabDisabled = () => {
     const usedLanguages = categoryTranslations.map((t) => t.languageCode);
     const conditionEveryLanguageCodesUsed = AVAILABLE_LANGUAGES.every((lang) =>
-      usedLanguages.includes(lang.code)
+      usedLanguages.includes(lang.code),
     );
-    const conditionMaxTabs = categoryTranslations.length >= AVAILABLE_LANGUAGES.length;
+    const conditionMaxTabs =
+      categoryTranslations.length >= AVAILABLE_LANGUAGES.length;
     return conditionEveryLanguageCodesUsed || conditionMaxTabs;
   };
 
   const updateTranslation = (
     index: number,
     field: 'languageCode' | 'displayName',
-    value: string
+    value: string,
   ) => {
     const updatedTranslations = [...categoryTranslations];
     updatedTranslations[index][field] = value;
@@ -171,7 +176,10 @@ export default function CategoryForm({ id }: { id?: string }) {
   };
 
   return (
-    <form onSubmit={submitHandler} className="flex flex-col space-y-4 w-full max-w-md">
+    <form
+      onSubmit={submitHandler}
+      className="flex flex-col space-y-4 w-full max-w-md"
+    >
       <label className="form-control w-full">
         <span className="label-text">Display Name</span>
         <input
@@ -194,7 +202,8 @@ export default function CategoryForm({ id }: { id?: string }) {
             setCategoryType(e.target.value as CategoryTypeEnum);
           }}
           className="select select-bordered w-full"
-          disabled={loading}>
+          disabled={loading}
+        >
           <option value={CategoryTypeEnum.Blog}>Blog</option>
           <option value={CategoryTypeEnum.Other}>Other</option>
         </select>
@@ -205,7 +214,10 @@ export default function CategoryForm({ id }: { id?: string }) {
           chips={categoryTags}
           setChips={(chips: { label: string; color: string }[]) => {
             setCategoryTags(
-              chips.map((chip) => ({ label: chip.label.toLowerCase(), color: chip.color }))
+              chips.map((chip) => ({
+                label: chip.label.toLowerCase(),
+                color: chip.color,
+              })),
             );
           }}
           className="flex flex-wrap border border-base-300 rounded-md p-2"
@@ -224,7 +236,8 @@ export default function CategoryForm({ id }: { id?: string }) {
                 onClick={(e) => {
                   e.preventDefault();
                   handleTabClick(index);
-                }}>
+                }}
+              >
                 {translation.languageCode || `Tab ${index + 1}`}
               </button>
             ))}
@@ -232,7 +245,8 @@ export default function CategoryForm({ id }: { id?: string }) {
               type="button"
               className="btn btn-sm btn-outline ml-2"
               onClick={addTranslationTab}
-              disabled={isAddTabDisabled()}>
+              disabled={isAddTabDisabled()}
+            >
               + Add Tab
             </button>
           </div>
@@ -242,7 +256,8 @@ export default function CategoryForm({ id }: { id?: string }) {
                 key={index}
                 className={`p-4 border border-base-300 rounded-md ${
                   activeTab === index ? '' : 'hidden'
-                }`}>
+                }`}
+              >
                 <label className="form-control w-full">
                   <span className="label-text">Language Code</span>
                   <select
@@ -255,7 +270,8 @@ export default function CategoryForm({ id }: { id?: string }) {
                     }}
                     className="select select-bordered w-full"
                     required
-                    disabled={loading}>
+                    disabled={loading}
+                  >
                     <option value="">Select Language</option>
                     {AVAILABLE_LANGUAGES.map((lang) => (
                       <option key={lang.code} value={lang.code}>
@@ -269,7 +285,9 @@ export default function CategoryForm({ id }: { id?: string }) {
                   <input
                     type="text"
                     value={translation.displayName}
-                    onChange={(e) => updateTranslation(index, 'displayName', e.target.value)}
+                    onChange={(e) =>
+                      updateTranslation(index, 'displayName', e.target.value)
+                    }
                     className="input input-bordered w-full"
                     placeholder="Enter translated display name"
                     required
