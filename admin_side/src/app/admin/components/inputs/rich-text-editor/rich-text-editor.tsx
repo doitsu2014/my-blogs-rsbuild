@@ -43,7 +43,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const quillRef = useRef<Quill | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current || quillRef.current) return;
+    if (!containerRef.current) return;
+
+    // Prevent double initialization
+    if (quillRef.current) return;
+
+    // Clear any existing content first
+    containerRef.current.innerHTML = '';
 
     const editorDiv = document.createElement('div');
     containerRef.current.appendChild(editorDiv);
