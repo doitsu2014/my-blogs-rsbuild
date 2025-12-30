@@ -21,9 +21,9 @@ export default function AdminBlogsPage() {
       try {
         setPageLoading(true);
         const response = await authenticatedFetch(getApiUrl('/posts?categoryType=Blog'), token);
-        const data = await response.json();
+        const res: {data: PostModel[]} = await response.json();
         // Sort blogs by createdAt in descending order
-        const sortedBlogs = data.sort((a: PostModel, b: PostModel) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const sortedBlogs = res.data.sort((a: PostModel, b: PostModel) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setBlogs(sortedBlogs);
       } catch (error) {
         console.error('Error fetching blogs:', error);

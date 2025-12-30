@@ -81,12 +81,12 @@ export default function BlogForm({ id }: { id?: string }) {
           { cache: 'no-store' },
         );
         if (response.ok) {
-          const data = await response.json();
-          setCategories(data);
+          const res: {data: CategoryModel[]} = await response.json();
+          setCategories(res.data);
 
           // If we don't have a selected category yet and there are categories, select the first one
-          if (!selectedCategoryId && data.length > 0 && !id) {
-            setSelectedCategoryId(data[0].id);
+          if (!selectedCategoryId && res.data.length > 0 && !id) {
+            setSelectedCategoryId(res.data[0].id);
           }
         }
       } catch (error) {

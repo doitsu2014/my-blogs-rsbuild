@@ -58,6 +58,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         flow: 'standard',
         // Clean up URL after successful authentication
         enableLogging: false,
+        // Enable token persistence in localStorage to survive page refreshes
+        // This stores the token, refresh token, and ID token in browser storage
+        // Critical for maintaining user session across page reloads
+        token: localStorage.getItem('kc_token') || undefined,
+        refreshToken: localStorage.getItem('kc_refreshToken') || undefined,
+        idToken: localStorage.getItem('kc_idToken') || undefined,
       })
       .then((auth) => {
         setAuthenticated(auth);
@@ -65,6 +71,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (auth && keycloak.token) {
           setToken(keycloak.token);
+
+          // Persist tokens to localStorage for session continuity across page reloads
+          if (keycloak.token) {
+            localStorage.setItem('kc_token', keycloak.token);
+          }
+          if (keycloak.refreshToken) {
+            localStorage.setItem('kc_refreshToken', keycloak.refreshToken);
+          }
+          if (keycloak.idToken) {
+            localStorage.setItem('kc_idToken', keycloak.idToken);
+          }
 
           // Clean up URL hash after successful authentication
           // Add a small delay to ensure Keycloak has finished processing
@@ -92,15 +109,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (tokenRefreshInterval) {
             clearInterval(tokenRefreshInterval);
           }
-          
+
           tokenRefreshInterval = setInterval(() => {
             keycloak.updateToken(70).then((refreshed) => {
               if (refreshed && keycloak.token) {
                 setToken(keycloak.token);
+
+                // Update localStorage with refreshed tokens
+                if (keycloak.token) {
+                  localStorage.setItem('kc_token', keycloak.token);
+                }
+                if (keycloak.refreshToken) {
+                  localStorage.setItem('kc_refreshToken', keycloak.refreshToken);
+                }
+                if (keycloak.idToken) {
+                  localStorage.setItem('kc_idToken', keycloak.idToken);
+                }
+
                 console.log('Token refreshed');
               }
             }).catch(() => {
               console.error('Failed to refresh token');
+              // Clear tokens from localStorage on refresh failure
+              localStorage.removeItem('kc_token');
+              localStorage.removeItem('kc_refreshToken');
+              localStorage.removeItem('kc_idToken');
               keycloak.logout();
             });
           }, 60 * 1000); // Check every minute
@@ -131,6 +164,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
+    // Clear tokens from localStorage before logging out
+    localStorage.removeItem('kc_token');
+    localStorage.removeItem('kc_refreshToken');
+    localStorage.removeItem('kc_idToken');
+
     keycloak.logout({
       redirectUri: window.location.origin,
     });
