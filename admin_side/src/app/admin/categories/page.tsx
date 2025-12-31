@@ -10,13 +10,12 @@ import {
   Search,
   X,
   FolderOpen,
-  Filter,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Breadcrumbs from '../components/my-breadcrumbs';
 import TableSkeleton from '../components/skeleton/table-skeleton';
-import { TagModel } from '@/domains/tag';
-import { CategoryModel } from '@/domains/category';
+import type { TagModel } from '@/domains/tag';
+import type { CategoryModel } from '@/domains/category';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
 
@@ -331,7 +330,7 @@ export default function AdminCategoriesListPage() {
                     </td>
                     <td className="text-base-content/70 text-sm">{category.createdBy || '-'}</td>
                     <td>
-                      {category.tags?.length > 0 ? (
+                      {category.tags && category.tags.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {category.tags.slice(0, 3).map((tag: TagModel) => (
                             <span key={tag.id} className="badge badge-ghost badge-sm">

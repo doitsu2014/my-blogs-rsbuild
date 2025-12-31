@@ -1,5 +1,5 @@
-import { CategoryModel } from './category';
-import { TagModel } from './tag';
+import type { CategoryModel } from './category';
+import type { TagModel } from './tag';
 
 export interface PostModel {
   id: string;

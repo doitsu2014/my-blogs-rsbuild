@@ -1,5 +1,5 @@
-import { CategoryModel } from '@/domains/category';
-import { PostInFooterModel, PostModel } from '@/domains/post';
+import type { CategoryModel } from '@/domains/category';
+import type { PostInFooterModel, PostModel } from '@/domains/post';
 
 export const mapGraphQlModelToCategoryModel = (
   graphqlNode: any | undefined

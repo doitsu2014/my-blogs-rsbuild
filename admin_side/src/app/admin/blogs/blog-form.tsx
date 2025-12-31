@@ -9,7 +9,7 @@ import type { CategoryModel } from '@/domains/category';
 import MultiChipInput, {
   getRandomColor,
 } from '../components/inputs/multi-chip-input';
-import { Info, ImagePlus, Tag, BookOpen, Save, FileText } from 'lucide-react';
+import { Info, ImagePlus, Tag, BookOpen, Save, FileText, ArrowLeft } from 'lucide-react';
 import { RichTextEditor } from '../components/inputs/rich-text-editor/rich-text-editor';
 import ThumbnailsInput from '../components/inputs/thumbnail-input';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
@@ -17,7 +17,7 @@ import { useAuth } from '@/auth/AuthContext';
 
 export default function BlogForm({ id }: { id?: string }) {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, keycloak } = useAuth();
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [originalContent, setOriginalContent] = useState('');
   const [fetchingData, setFetchingData] = useState(false);
@@ -55,6 +55,7 @@ export default function BlogForm({ id }: { id?: string }) {
             getApiUrl(`/posts/${id}`),
             token,
             { cache: 'no-store' },
+            keycloak || undefined
           );
           if (response && response.ok) {
             const res: { data: PostModel } = await response.json();
@@ -94,15 +95,16 @@ export default function BlogForm({ id }: { id?: string }) {
       });
       setOriginalContent('');
     }
-  }, [id, reset, token]);
+  }, [id, reset, token, keycloak]);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await authenticatedFetch(
-          getApiUrl('/posts?categoryType=Blog'),
+          getApiUrl('/categories'),
           token,
           { cache: 'no-store' },
+          keycloak || undefined
         );
         if (response.ok) {
           const res: { data: CategoryModel[] } = await response.json();
@@ -122,7 +124,7 @@ export default function BlogForm({ id }: { id?: string }) {
     };
 
     fetchCategories();
-  }, [id, token, setValue, watch]);
+  }, [id, token, keycloak, setValue, watch]);
 
   const onSubmit = async (data: BlogFormData) => {
     try {
@@ -133,13 +135,18 @@ export default function BlogForm({ id }: { id?: string }) {
 
       const method = id ? 'PUT' : 'POST';
 
-      const response = await authenticatedFetch(getApiUrl('/posts'), token, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await authenticatedFetch(
+        getApiUrl('/posts'),
+        token,
+        {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(postData),
         },
-        body: JSON.stringify(postData),
-      });
+        keycloak || undefined
+      );
 
       if (response.ok) {
         toast.success(id ? 'Post updated successfully' : 'Post created successfully');
@@ -156,127 +163,139 @@ export default function BlogForm({ id }: { id?: string }) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col space-y-4 max-w-6xl mx-auto"
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full max-w-6xl">
       {/* Basic Information */}
-      <div className="card bg-base-200 shadow-sm">
-        <div className="card-body p-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-            <Info size={18} />
+      <div className="card bg-base-100 shadow-sm">
+        <div className="card-body">
+          <h2 className="card-title text-lg flex items-center gap-2">
+            <Info className="w-5 h-5" />
             Basic Information
-          </h3>
+          </h2>
+          <p className="text-sm text-base-content/60 mb-4">
+            Set the title, category, and publication status for your blog post
+          </p>
 
-          <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text font-medium">Title</span>
-            </div>
-            <input
-              type="text"
-              {...register('title')}
-              className={`input input-bordered w-full ${errors.title ? 'input-error' : ''}`}
-              placeholder="Enter an engaging title"
-              disabled={isLoading}
-            />
-            {errors.title && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="form-control w-full md:col-span-2">
               <div className="label">
-                <span className="label-text-alt text-error">{errors.title.message}</span>
+                <span className="label-text font-medium">Title</span>
               </div>
-            )}
-          </label>
+              <input
+                type="text"
+                {...register('title')}
+                className={`input input-bordered w-full ${errors.title ? 'input-error' : ''}`}
+                placeholder="Enter an engaging title"
+                disabled={isLoading}
+              />
+              {errors.title && (
+                <div className="label">
+                  <span className="label-text-alt text-error">{errors.title.message}</span>
+                </div>
+              )}
+            </label>
 
-          <label className="form-control w-full mt-4">
-            <div className="label">
-              <span className="label-text font-medium">Category</span>
-            </div>
-            <select
-              {...register('categoryId')}
-              className={`select select-bordered w-full ${errors.categoryId ? 'select-error' : ''}`}
-              disabled={isLoading || categories.length === 0}
-            >
-              <option value="" disabled>
-                Select a category
-              </option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.displayName}
+            <label className="form-control w-full">
+              <div className="label">
+                <span className="label-text font-medium">Category</span>
+              </div>
+              <select
+                {...register('categoryId')}
+                className={`select select-bordered w-full ${errors.categoryId ? 'select-error' : ''}`}
+                disabled={isLoading || categories.length === 0}
+              >
+                <option value="" disabled>
+                  Select a category
                 </option>
-              ))}
-            </select>
-            {errors.categoryId && (
-              <div className="label">
-                <span className="label-text-alt text-error">{errors.categoryId.message}</span>
-              </div>
-            )}
-            {categories.length === 0 && (
-              <div className="label">
-                <span className="label-text-alt text-error">
-                  No categories available
-                </span>
-              </div>
-            )}
-          </label>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.displayName}
+                  </option>
+                ))}
+              </select>
+              {errors.categoryId && (
+                <div className="label">
+                  <span className="label-text-alt text-error">{errors.categoryId.message}</span>
+                </div>
+              )}
+              {categories.length === 0 && (
+                <div className="label">
+                  <span className="label-text-alt text-warning">No categories available</span>
+                </div>
+              )}
+            </label>
 
-          <div className="form-control mt-4">
-            <div className="label">
-              <span className="label-text font-medium">Published Status:</span>
+            <div className="form-control w-full">
+              <div className="label">
+                <span className="label-text font-medium">Published Status</span>
+              </div>
+              <Controller
+                name="published"
+                control={control}
+                render={({ field }) => (
+                  <div className="flex items-center gap-3 border border-base-300 rounded-lg px-4 h-12 bg-base-100">
+                    <input
+                      type="checkbox"
+                      className="toggle toggle-primary toggle-sm"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      disabled={isLoading}
+                    />
+                    <span
+                      className={`badge ${field.value ? 'badge-success' : 'badge-ghost'}`}
+                    >
+                      {field.value ? 'Published' : 'Draft'}
+                    </span>
+                  </div>
+                )}
+              />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Thumbnails */}
+      <div className="card bg-base-100 shadow-sm">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="card-title text-lg flex items-center gap-2">
+                <ImagePlus className="w-5 h-5" />
+                Thumbnails
+              </h2>
+              <p className="text-sm text-base-content/60">Upload images for your blog post</p>
+            </div>
+            <span className="badge badge-ghost">Optional</span>
+          </div>
+          <div className="mt-4">
             <Controller
-              name="published"
+              name="thumbnailPaths"
               control={control}
               render={({ field }) => (
-                <label className="cursor-pointer label justify-start gap-3 bg-base-100 rounded-md p-3">
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-primary"
-                    checked={field.value}
-                    onChange={field.onChange}
-                    disabled={isLoading}
-                  />
-                  <span className="label-text">
-                    {field.value ? 'Published' : 'Draft'}
-                  </span>
-                </label>
+                <ThumbnailsInput
+                  value={field.value}
+                  onUploadSuccess={(urls) => field.onChange([...urls])}
+                />
               )}
             />
           </div>
         </div>
       </div>
 
-      {/* Thumbnails */}
-      <div className="card bg-base-200 shadow-sm">
-        <div className="card-body p-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-            <ImagePlus size={18} />
-            Thumbnails
-          </h3>
-          <Controller
-            name="thumbnailPaths"
-            control={control}
-            render={({ field }) => (
-              <ThumbnailsInput
-                value={field.value}
-                onUploadSuccess={(urls) => field.onChange([...urls])}
-              />
-            )}
-          />
-        </div>
-      </div>
-
       {/* Tags */}
-      <div className="card bg-base-200 shadow-sm">
-        <div className="card-body p-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-            <Tag size={18} />
-            Tags
-          </h3>
-
-          <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text font-medium">Add Tags</span>
-              <span className="label-text-alt">Press Enter to add</span>
+      <div className="card bg-base-100 shadow-sm">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="card-title text-lg flex items-center gap-2">
+                <Tag className="w-5 h-5" />
+                Tags
+              </h2>
+              <p className="text-sm text-base-content/60">Add tags to categorize your content</p>
             </div>
+            <span className="badge badge-ghost">Optional</span>
+          </div>
+
+          <label className="form-control w-full mt-4">
             <Controller
               name="tagNames"
               control={control}
@@ -289,31 +308,31 @@ export default function BlogForm({ id }: { id?: string }) {
                   setChips={(chips: { label: string; color: string }[]) => {
                     field.onChange(chips.map((chip) => chip.label.toLowerCase()));
                   }}
-                  className="flex flex-wrap border border-base-300 rounded-md p-2 min-h-16 bg-base-200"
+                  className="flex flex-wrap border border-base-300 rounded-lg p-3 min-h-[48px] bg-base-100"
                   loading={isLoading}
                   formControlName="tags"
                 />
               )}
             />
+            <div className="label">
+              <span className="label-text-alt text-base-content/50">Press Enter to add a tag</span>
+            </div>
           </label>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="card bg-base-200 shadow-sm">
-        <div className="card-body p-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-            <BookOpen size={18} />
+      {/* Preview Content */}
+      <div className="card bg-base-100 shadow-sm">
+        <div className="card-body">
+          <h2 className="card-title text-lg flex items-center gap-2">
+            <BookOpen className="w-5 h-5" />
             Preview Content
-          </h3>
+          </h2>
+          <p className="text-sm text-base-content/60 mb-4">
+            Write a short summary that will appear in blog listings
+          </p>
 
           <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text font-medium">Short Preview</span>
-              <span className="label-text-alt">
-                This will appear in blog lists
-              </span>
-            </div>
             <textarea
               {...register('previewContent')}
               className={`textarea textarea-bordered w-full min-h-24 ${errors.previewContent ? 'textarea-error' : ''}`}
@@ -330,15 +349,16 @@ export default function BlogForm({ id }: { id?: string }) {
       </div>
 
       {/* Full Article Content */}
-      <div className="card bg-base-200 shadow-sm">
-        <div className="card-body p-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-            <FileText size={18} />
+      <div className="card bg-base-100 shadow-sm">
+        <div className="card-body">
+          <h2 className="card-title text-lg flex items-center gap-2">
+            <FileText className="w-5 h-5" />
             Full Article Content
-          </h3>
+          </h2>
+          <p className="text-sm text-base-content/60 mb-4">Write your full article content</p>
 
           <div
-            className="form-control w-full bg-base-100 rounded-md border border-base-300"
+            className="form-control w-full bg-base-100 rounded-lg border border-base-300"
             key="main-editor"
           >
             <Controller
@@ -366,37 +386,30 @@ export default function BlogForm({ id }: { id?: string }) {
         </div>
       </div>
 
-      {/* Form Actions */}
-      <div className="card bg-base-200 shadow-sm">
-        <div className="card-body p-4">
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => navigate('/admin/blogs')}
-              disabled={isLoading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isLoading}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  {id ? 'Updating...' : 'Creating...'}
-                </>
-              ) : (
-                <>
-                  <Save size={18} />
-                  {id ? 'Update Post' : 'Create Post'}
-                </>
-              )}
-            </button>
-          </div>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+        <button
+          type="button"
+          className="btn btn-ghost gap-2"
+          onClick={() => navigate('/admin/blogs')}
+          disabled={isLoading}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Cancel
+        </button>
+        <button type="submit" className="btn btn-primary flex-1 gap-2" disabled={isLoading}>
+          {isSubmitting ? (
+            <>
+              <span className="loading loading-spinner loading-sm"></span>
+              {id ? 'Updating...' : 'Creating...'}
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              {id ? 'Update Post' : 'Create Post'}
+            </>
+          )}
+        </button>
       </div>
     </form>
   );
