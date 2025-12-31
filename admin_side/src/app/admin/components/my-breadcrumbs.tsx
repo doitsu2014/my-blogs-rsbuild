@@ -12,18 +12,18 @@ type BreadcrumbsProps = {
 
 export default function Breadcrumbs({ items }: BreadcrumbsProps) {
   return (
-    <div className="text-sm breadcrumbs">
+    <div className="breadcrumbs text-sm mb-4">
       <ul>
         {items.map((item, index) => (
           <li key={index}>
             {item.href ? (
-              <Link to={item.href} className="hover:underline">
-                {item.icon && <span className="mr-1">{item.icon}</span>}
+              <Link to={item.href} className="inline-flex items-center gap-2 hover:text-primary transition-colors">
+                {item.icon}
                 {item.label}
               </Link>
             ) : (
-              <span className="text-gray-500">
-                {item.icon && <span className="mr-1">{item.icon}</span>}
+              <span className="inline-flex items-center gap-2 opacity-70">
+                {item.icon}
                 {item.label}
               </span>
             )}

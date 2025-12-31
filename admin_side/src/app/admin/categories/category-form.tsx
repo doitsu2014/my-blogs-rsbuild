@@ -1,286 +1,475 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MultiChipInput, { getRandomColor } from '../components/inputs/multi-chip-input';
-import { UpdateCategoryModel } from '@/models/UpdateCategoryModel';
-import { CreateCategoryModel } from '@/models/CreateCategoryModel';
-import { CategoryModel, CategoryTypeEnum } from '@/domains/category';
-import { TagModel } from '@/domains/tag';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { categoryFormSchema, type CategoryFormData } from '@/schemas/category.schema';
+import MultiChipInput, {
+  getRandomColor,
+} from '../components/inputs/multi-chip-input';
+import type { UpdateCategoryModel } from '@/models/UpdateCategoryModel';
+import type { CreateCategoryModel } from '@/models/CreateCategoryModel';
+import { CategoryTypeEnum, type CategoryModel } from '@/domains/category';
+import type { TagModel } from '@/domains/tag';
+import { getApiUrl, authenticatedFetch } from '@/config/api.config';
+import { useAuth } from '@/auth/AuthContext';
+import { Plus, Save, ArrowLeft, Languages, X, FolderOpen, Tag, Globe } from 'lucide-react';
 
 const AVAILABLE_LANGUAGES = [{ code: 'vi', displayName: 'Vietnamese (vi)' }];
 
 export default function CategoryForm({ id }: { id?: string }) {
   const navigate = useNavigate();
-  const [displayName, setDisplayName] = useState('');
-  const [categoryType, setCategoryType] = useState(CategoryTypeEnum.Blog);
-  const [categoryTags, setCategoryTags] = useState<{ label: string; color: string }[]>([]);
-  const [rowVersion, setRowVersion] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [categoryTranslations, setCategoryTranslations] = useState<
-    { id: string; languageCode: string; displayName: string }[]
-  >([]);
+  const { token, keycloak } = useAuth();
+  const [fetchingData, setFetchingData] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<CategoryFormData>({
+    resolver: zodResolver(categoryFormSchema),
+    defaultValues: {
+      displayName: '',
+      categoryType: CategoryTypeEnum.Blog,
+      tagNames: [],
+      translations: [],
+      rowVersion: 0,
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'translations',
+  });
+
+  const translations = watch('translations');
+  const isLoading = isSubmitting || fetchingData;
 
   useEffect(() => {
     if (id) {
-      const fetchCategories = async () => {
+      const fetchCategory = async () => {
+        setFetchingData(true);
         try {
-          // TODO: Replace with actual API endpoint in Phase 10
-          const response = await fetch(`/api/admin/categories/${id}`, {
-            cache: 'no-store'
-          });
+          const response = await authenticatedFetch(
+            getApiUrl(`/categories/${id}`),
+            token,
+            { cache: 'no-store' },
+            keycloak || undefined,
+          );
           if (response && response.ok) {
-            const data: CategoryModel = await response.json();
-            setDisplayName(data.displayName);
-            setCategoryType(data.categoryType);
-            setCategoryTags(
-              data.categoryTags.map((tag: TagModel) => ({
-                label: tag.name,
-                color: getRandomColor()
-              }))
-            );
-            setCategoryTranslations(
-              data.categoryTranslations.map((ct) => ({
-                ...ct
-              }))
-            );
-            setRowVersion(data.rowVersion);
+            const res: { data: CategoryModel } = await response.json();
+            reset({
+              displayName: res.data.displayName,
+              categoryType: res.data.categoryType,
+              tagNames: res.data.tags?.map((tag: TagModel) => tag.name),
+              translations: res.data.translations?.map((ct) => ({
+                id: ct.id,
+                languageCode: ct.languageCode,
+                displayName: ct.displayName,
+              })),
+              rowVersion: res.data.rowVersion,
+            });
+          } else {
+            toast.error('Failed to load category');
           }
         } catch (error) {
           console.error('Failed to load category:', error);
+          toast.error('Error loading category');
         } finally {
-          setLoading(false);
+          setFetchingData(false);
         }
       };
 
-      setLoading(true);
-      fetchCategories();
+      fetchCategory();
     } else {
-      setDisplayName('');
-      setCategoryType(CategoryTypeEnum.Blog);
-      setCategoryTags([]);
-      setCategoryTranslations([]);
-      setRowVersion(0);
+      reset({
+        displayName: '',
+        categoryType: CategoryTypeEnum.Blog,
+        tagNames: [],
+        translations: [],
+        rowVersion: 0,
+      });
     }
-  }, [id]);
+  }, [id, reset, token, keycloak]);
 
-  const submitHandler = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setLoading(true);
-
+  const onSubmit = async (data: CategoryFormData) => {
     try {
       if (id) {
         const categoryData: UpdateCategoryModel = {
           id,
-          displayName,
-          categoryType,
-          tagNames: categoryTags.map((tag) => tag.label),
-          rowVersion,
-          translations: categoryTranslations.map((translation) => ({
+          displayName: data.displayName,
+          categoryType: data.categoryType,
+          tagNames: data.tagNames,
+          rowVersion: data.rowVersion,
+          translations: data.translations?.map((translation) => ({
             displayName: translation.displayName,
             id: translation.id || undefined,
-            languageCode: translation.languageCode
-          }))
+            languageCode: translation.languageCode,
+          })),
         };
 
-        // TODO: Replace with actual API endpoint in Phase 10
-        const updateResponse = await fetch(`/api/admin/categories`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
+        const updateResponse = await authenticatedFetch(
+          getApiUrl('/categories'),
+          token,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(categoryData),
           },
-          body: JSON.stringify(categoryData)
-        });
+          keycloak || undefined,
+        );
 
         if (updateResponse.ok) {
+          toast.success('Category updated successfully');
           navigate('/admin/categories');
         } else {
-          console.error(await updateResponse.json(), updateResponse.status);
+          const errorData = await updateResponse.json();
+          console.error(errorData, updateResponse.status);
+          toast.error(errorData.message || 'Failed to update category');
         }
       } else {
-        console.info('Creating category');
         const categoryData: CreateCategoryModel = {
-          displayName,
-          categoryType,
-          tagNames: categoryTags.map((tag) => tag.label),
-          translations: categoryTranslations.map((translation) => ({
+          displayName: data.displayName,
+          categoryType: data.categoryType,
+          tagNames: data.tagNames,
+          translations: data.translations?.map((translation) => ({
             displayName: translation.displayName,
-            languageCode: translation.languageCode
-          }))
+            languageCode: translation.languageCode,
+          })),
         };
 
-        // TODO: Replace with actual API endpoint in Phase 10
-        const createResponse = await fetch(`/api/admin/categories`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
+        const createResponse = await authenticatedFetch(
+          getApiUrl('/categories'),
+          token,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(categoryData),
           },
-          body: JSON.stringify(categoryData)
-        });
+          keycloak || undefined,
+        );
 
         if (createResponse.ok) {
+          toast.success('Category created successfully');
           navigate('/admin/categories');
         } else {
-          console.error(await createResponse.json(), createResponse.status);
+          const errorData = await createResponse.json();
+          console.error(errorData, createResponse.status);
+          toast.error(errorData.message || 'Failed to create category');
         }
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-    } finally {
-      setLoading(false);
+      toast.error('Network error. Please try again.');
     }
   };
 
   const addTranslationTab = () => {
-    setCategoryTranslations([
-      ...categoryTranslations,
-      { id: '', languageCode: '', displayName: '' }
-    ]);
+    append({ id: '', languageCode: '', displayName: '' });
+    setActiveTab(fields.length);
+  };
+
+  const removeTranslationTab = (index: number) => {
+    remove(index);
+    if (activeTab >= fields.length - 1) {
+      setActiveTab(Math.max(0, fields.length - 2));
+    }
   };
 
   const isAddTabDisabled = () => {
-    const usedLanguages = categoryTranslations.map((t) => t.languageCode);
+    const usedLanguages = translations?.map((t) => t.languageCode) || [];
     const conditionEveryLanguageCodesUsed = AVAILABLE_LANGUAGES.every((lang) =>
-      usedLanguages.includes(lang.code)
+      usedLanguages.includes(lang.code),
     );
-    const conditionMaxTabs = categoryTranslations.length >= AVAILABLE_LANGUAGES.length;
+    const conditionMaxTabs = fields.length >= AVAILABLE_LANGUAGES.length;
     return conditionEveryLanguageCodesUsed || conditionMaxTabs;
   };
 
-  const updateTranslation = (
-    index: number,
-    field: 'languageCode' | 'displayName',
-    value: string
-  ) => {
-    const updatedTranslations = [...categoryTranslations];
-    updatedTranslations[index][field] = value;
-    setCategoryTranslations(updatedTranslations);
-  };
-
-  const handleTabClick = (index: number) => {
-    setActiveTab(index);
-  };
-
   return (
-    <form onSubmit={submitHandler} className="flex flex-col space-y-4 w-full max-w-md">
-      <label className="form-control w-full">
-        <span className="label-text">Display Name</span>
-        <input
-          type="text"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          className="input input-bordered w-full"
-          placeholder="Enter display name"
-          required
-          name="displayName"
-          disabled={loading}
-        />
-      </label>
-      <label className="form-control w-full">
-        <span className="label-text">Category Type</span>
-        <select
-          name="categoryType"
-          value={categoryType}
-          onChange={(e) => {
-            setCategoryType(e.target.value as CategoryTypeEnum);
-          }}
-          className="select select-bordered w-full"
-          disabled={loading}>
-          <option value={CategoryTypeEnum.Blog}>Blog</option>
-          <option value={CategoryTypeEnum.Other}>Other</option>
-        </select>
-      </label>
-      <label className="form-control w-full">
-        <span className="label-text">Tags</span>
-        <MultiChipInput
-          chips={categoryTags}
-          setChips={(chips: { label: string; color: string }[]) => {
-            setCategoryTags(
-              chips.map((chip) => ({ label: chip.label.toLowerCase(), color: chip.color }))
-            );
-          }}
-          className="flex flex-wrap border border-base-300 rounded-md p-2"
-          loading={loading}
-          formControlName="categoryTags"
-        />
-      </label>
-      <div className="form-control w-full">
-        <span className="label-text">Category Translations</span>
-        <div className="tabs">
-          <div className="tabs-box">
-            {categoryTranslations?.map((translation, index) => (
-              <button
-                key={index}
-                className={`tab ${activeTab === index ? 'tab-active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleTabClick(index);
-                }}>
-                {translation.languageCode || `Tab ${index + 1}`}
-              </button>
-            ))}
-            <button
-              type="button"
-              className="btn btn-sm btn-outline ml-2"
-              onClick={addTranslationTab}
-              disabled={isAddTabDisabled()}>
-              + Add Tab
-            </button>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full">
+      {/* Basic Information Card */}
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-primary hover:shadow-xl transition-shadow duration-300">
+        <div className="card-body">
+          <div className="flex items-start gap-4">
+            <div className="bg-primary/10 p-3 rounded-xl">
+              <FolderOpen className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h2 className="card-title text-lg">Basic Information</h2>
+              <p className="text-sm text-base-content/60">
+                Set the display name and type for this category
+              </p>
+            </div>
           </div>
-          <div className="mt-2">
-            {categoryTranslations?.map((translation, index) => (
-              <div
-                key={index}
-                className={`p-4 border border-base-300 rounded-md ${
-                  activeTab === index ? '' : 'hidden'
-                }`}>
-                <label className="form-control w-full">
-                  <span className="label-text">Language Code</span>
-                  <select
-                    value={translation.languageCode}
-                    onChange={(e) => {
-                      updateTranslation(index, 'languageCode', e.target.value);
-                      if (activeTab === index) {
-                        handleTabClick(index); // Ensure tab name updates dynamically
-                      }
-                    }}
-                    className="select select-bordered w-full"
-                    required
-                    disabled={loading}>
-                    <option value="">Select Language</option>
-                    {AVAILABLE_LANGUAGES.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.displayName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="form-control w-full mt-4">
-                  <span className="label-text">Display Name</span>
-                  <input
-                    type="text"
-                    value={translation.displayName}
-                    onChange={(e) => updateTranslation(index, 'displayName', e.target.value)}
-                    className="input input-bordered w-full"
-                    placeholder="Enter translated display name"
-                    required
-                    disabled={loading}
-                  />
-                </label>
+
+          <div className="divider my-2"></div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="form-control w-full">
+              <div className="label">
+                <span className="label-text font-medium">Display Name</span>
               </div>
-            ))}
+              <input
+                type="text"
+                {...register('displayName')}
+                className={`input input-bordered w-full focus:input-primary ${errors.displayName ? 'input-error' : ''}`}
+                placeholder="e.g., Technology"
+                disabled={isLoading}
+              />
+              {errors.displayName && (
+                <div className="label">
+                  <span className="label-text-alt text-error">{errors.displayName.message}</span>
+                </div>
+              )}
+            </label>
+
+            <label className="form-control w-full">
+              <div className="label">
+                <span className="label-text font-medium">Category Type</span>
+              </div>
+              <select
+                {...register('categoryType')}
+                className={`select select-bordered w-full focus:select-primary ${errors.categoryType ? 'select-error' : ''}`}
+                disabled={isLoading}
+              >
+                <option value={CategoryTypeEnum.Blog}>Blog</option>
+                <option value={CategoryTypeEnum.Other}>Other</option>
+              </select>
+              {errors.categoryType && (
+                <div className="label">
+                  <span className="label-text-alt text-error">{errors.categoryType.message}</span>
+                </div>
+              )}
+            </label>
           </div>
         </div>
       </div>
-      <input
-        type="hidden"
-        name="categoryTranslations"
-        value={JSON.stringify(categoryTranslations)}
-      />
-      <input type="hidden" name="rowVersion" value={rowVersion} />
-      <input type="hidden" name="id" value={id} />
-      <button type="submit" className="btn btn-primary" disabled={loading}>
-        {loading ? 'Saving...' : id ? 'Update' : 'Create'}
-      </button>
+
+      {/* Tags Card */}
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-accent hover:shadow-xl transition-shadow duration-300">
+        <div className="card-body">
+          <div className="flex items-start gap-4">
+            <div className="bg-accent/10 p-3 rounded-xl">
+              <Tag className="w-6 h-6 text-accent" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <h2 className="card-title text-lg">Tags</h2>
+                <span className="badge badge-accent badge-outline">Optional</span>
+              </div>
+              <p className="text-sm text-base-content/60">
+                Add tags to help organize and filter categories
+              </p>
+            </div>
+          </div>
+
+          <div className="divider my-2"></div>
+
+          <label className="form-control w-full">
+            <Controller
+              name="tagNames"
+              control={control}
+              render={({ field }) => (
+                <MultiChipInput
+                  chips={field.value.map((tag) => ({
+                    label: tag,
+                    color: getRandomColor(),
+                  }))}
+                  setChips={(chips: { label: string; color: string }[]) => {
+                    field.onChange(chips.map((chip) => chip.label.toLowerCase()));
+                  }}
+                  className="flex flex-wrap border-2 border-base-300 rounded-xl p-3 min-h-[52px] bg-base-100 focus-within:border-accent transition-colors"
+                  loading={isLoading}
+                  formControlName="tags"
+                />
+              )}
+            />
+            <div className="label">
+              <span className="label-text-alt text-base-content/50">Press Enter to add a tag</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* Translations Card */}
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-secondary hover:shadow-xl transition-shadow duration-300">
+        <div className="card-body">
+          <div className="flex items-start gap-4">
+            <div className="bg-secondary/10 p-3 rounded-xl">
+              <Globe className="w-6 h-6 text-secondary" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="card-title text-lg">Translations</h2>
+                  <p className="text-sm text-base-content/60">
+                    Add translations for different languages
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary btn-outline gap-1"
+                  onClick={addTranslationTab}
+                  disabled={isAddTabDisabled() || isLoading}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Language
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="divider my-2"></div>
+
+          {fields.length === 0 ? (
+            <div className="text-center py-10 border-2 border-dashed border-base-300 rounded-xl bg-base-200/30">
+              <div className="bg-secondary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Languages className="w-8 h-8 text-secondary/50" />
+              </div>
+              <p className="text-base-content/50 text-sm mb-3">No translations added yet</p>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost text-secondary"
+                onClick={addTranslationTab}
+                disabled={isAddTabDisabled() || isLoading}
+              >
+                <Plus className="w-4 h-4" />
+                Add first translation
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Translation Tabs */}
+              <div className="tabs tabs-boxed bg-base-200 p-1 rounded-xl mb-4">
+                {fields.map((field, index) => (
+                  <button
+                    key={field.id}
+                    type="button"
+                    className={`tab gap-2 transition-all ${activeTab === index ? 'tab-active bg-secondary text-secondary-content' : ''}`}
+                    onClick={() => setActiveTab(index)}
+                  >
+                    <Globe className="w-3 h-3" />
+                    {translations[index]?.languageCode?.toUpperCase() || `New`}
+                  </button>
+                ))}
+              </div>
+
+              {/* Translation Content */}
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className={`space-y-4 p-4 bg-base-200/30 rounded-xl ${activeTab === index ? '' : 'hidden'}`}
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-base-300">
+                    <span className="text-sm font-medium text-base-content/70 flex items-center gap-2">
+                      <Languages className="w-4 h-4" />
+                      Translation #{index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-ghost text-error hover:bg-error/10 gap-1"
+                      onClick={() => removeTranslationTab(index)}
+                      disabled={isLoading}
+                    >
+                      <X className="w-4 h-4" />
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label className="form-control w-full">
+                      <div className="label">
+                        <span className="label-text font-medium">Language</span>
+                      </div>
+                      <select
+                        {...register(`translations.${index}.languageCode`)}
+                        className={`select select-bordered w-full focus:select-secondary ${
+                          errors.translations?.[index]?.languageCode ? 'select-error' : ''
+                        }`}
+                        disabled={isLoading}
+                      >
+                        <option value="">Select Language</option>
+                        {AVAILABLE_LANGUAGES.map((lang) => (
+                          <option key={lang.code} value={lang.code}>
+                            {lang.displayName}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.translations?.[index]?.languageCode && (
+                        <div className="label">
+                          <span className="label-text-alt text-error">
+                            {errors.translations[index]?.languageCode?.message}
+                          </span>
+                        </div>
+                      )}
+                    </label>
+
+                    <label className="form-control w-full">
+                      <div className="label">
+                        <span className="label-text font-medium">Translated Name</span>
+                      </div>
+                      <input
+                        type="text"
+                        {...register(`translations.${index}.displayName`)}
+                        className={`input input-bordered w-full focus:input-secondary ${
+                          errors.translations?.[index]?.displayName ? 'input-error' : ''
+                        }`}
+                        placeholder="Enter translated name"
+                        disabled={isLoading}
+                      />
+                      {errors.translations?.[index]?.displayName && (
+                        <div className="label">
+                          <span className="label-text-alt text-error">
+                            {errors.translations[index]?.displayName?.message}
+                          </span>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+        <button
+          type="button"
+          className="btn btn-ghost gap-2 hover:bg-base-200"
+          onClick={() => navigate('/admin/categories')}
+          disabled={isLoading}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="btn btn-primary flex-1 gap-2 shadow-lg hover:shadow-primary/25"
+          disabled={isLoading}
+        >
+          {isSubmitting ? (
+            <>
+              <span className="loading loading-spinner loading-sm"></span>
+              {id ? 'Updating...' : 'Creating...'}
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              {id ? 'Update Category' : 'Create Category'}
+            </>
+          )}
+        </button>
+      </div>
     </form>
   );
 }

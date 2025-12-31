@@ -1,5 +1,5 @@
-import { CategoryModel } from '@/domains/category';
-import { PostInFooterModel, PostModel } from '@/domains/post';
+import type { CategoryModel } from '@/domains/category';
+import type { PostInFooterModel, PostModel } from '@/domains/post';
 
 export const mapGraphQlModelToCategoryModel = (
   graphqlNode: any | undefined
@@ -7,13 +7,13 @@ export const mapGraphQlModelToCategoryModel = (
   return !!graphqlNode
     ? {
         ...graphqlNode,
-        categoryTranslations: graphqlNode.categoryTranslations?.nodes.map((node: any) => ({
+        translations: graphqlNode.translations?.nodes.map((node: any) => ({
           id: node.id,
           languageCode: node.languageCode,
           displayName: node.displayName,
           slug: node.slug
         })),
-        categoryTags: graphqlNode.categoryTags?.nodes.map((node: any) => ({
+        tags: graphqlNode.tags?.nodes.map((node: any) => ({
           id: node.tags.id,
           name: node.tags.name,
           slug: node.tags.slug
@@ -28,7 +28,7 @@ export const mapGraphQlModelToPostModel = (graphqlNode: any | undefined): PostMo
         ...graphqlNode,
         categoryDisplayName: graphqlNode.categories?.displayName,
         categorySlug: graphqlNode.categories?.slug,
-        postTranslations: graphqlNode.postTranslations?.nodes.map((node: any) => ({
+        translations: graphqlNode.translations?.nodes.map((node: any) => ({
           id: node.id,
           languageCode: node.languageCode,
           title: node.title,
@@ -36,7 +36,7 @@ export const mapGraphQlModelToPostModel = (graphqlNode: any | undefined): PostMo
           content: node.content,
           slug: node.slug
         })),
-        postTags: graphqlNode.postTags?.nodes.map((node: any) => ({
+        tags: graphqlNode.tags?.nodes.map((node: any) => ({
           id: node.tags.id,
           name: node.tags.name,
           slug: node.tags.slug
@@ -52,7 +52,7 @@ export const mapGraphQlModelToPostInFooterModel = (
     ? {
         ...graphqlNode,
         category: mapGraphQlModelToCategoryModel(graphqlNode.categories),
-        postTranslations: graphqlNode.postTranslations?.nodes.map((node: any) => ({
+        translations: graphqlNode.translations?.nodes.map((node: any) => ({
           id: node.id,
           languageCode: node.languageCode,
           title: node.title,

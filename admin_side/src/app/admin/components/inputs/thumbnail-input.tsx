@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { getMediaUploadApiUrl, createAuthHeaders } from '@/config/api.config';
+import { useAuth } from '@/auth/AuthContext';
 
 interface ThumbnailsInputProps {
   onUploadSuccess: (urls: string[]) => void;
@@ -9,6 +12,7 @@ const ThumbnailsInput: React.FC<ThumbnailsInputProps> = ({
   onUploadSuccess,
   value = []
 }) => {
+  const { token } = useAuth();
   const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState('');
@@ -28,9 +32,9 @@ const ThumbnailsInput: React.FC<ThumbnailsInputProps> = ({
         const formData = new FormData();
         formData.append('image', file);
 
-        // TODO: Update this endpoint when API routes are implemented in Phase 10
-        const response = await fetch('/api/admin/media/images', {
+        const response = await fetch(getMediaUploadApiUrl(), {
           method: 'POST',
+          headers: createAuthHeaders(token),
           body: formData
         });
 
@@ -46,7 +50,7 @@ const ThumbnailsInput: React.FC<ThumbnailsInputProps> = ({
       onUploadSuccess([...thumbnails, ...uploadedUrls]);
     } catch (error) {
       console.error('Error uploading images:', error);
-      alert('Image upload failed. Please try again.');
+      toast.error('Image upload failed. Please try again.');
     } finally {
       setIsUploading(false);
     }

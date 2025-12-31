@@ -12,7 +12,7 @@ export default function buildGetCategoriesQuery() {
           createdBy
           createdAt
           rowVersion
-          categoryTags {
+          tags {
             nodes {
               tags {
                 id
@@ -39,7 +39,7 @@ export function buildGetCategoriesWithTranslationsQuery() {
           createdBy
           createdAt
           rowVersion
-          categoryTags {
+          tags {
             nodes {
               tags {
                 id
@@ -48,7 +48,7 @@ export function buildGetCategoriesWithTranslationsQuery() {
               }
             }
           }
-          categoryTranslations {
+          translations {
             nodes {
               id
               languageCode

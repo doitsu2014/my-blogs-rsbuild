@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(pnpm lint:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "WebSearch",
+      "WebFetch(domain:daisyui.com)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm lint:es:*)",
+      "Bash(pnpm exec tsc:*)"
     ]
   }
 }
