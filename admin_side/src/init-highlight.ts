@@ -11,4 +11,4 @@ import 'highlight.js/styles/atom-one-dark.css';
 // Must be done before any Quill imports in the application
 (window as any).hljs = hljs;
 
-console.log('highlight.js initialized globally:', !!window.hljs);
+console.log('highlight.js initialized globally:', !!(window as any).hljs);

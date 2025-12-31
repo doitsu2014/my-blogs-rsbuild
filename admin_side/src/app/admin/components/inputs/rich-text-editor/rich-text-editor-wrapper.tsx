@@ -1,5 +1,5 @@
 import React from 'react';
-import { RichTextEditorProps } from './rich-text-editor';
+import type { RichTextEditorProps } from './rich-text-editor';
 
 // Lazy load the rich text editor component for better performance
 const RichTextEditor = React.lazy(() => import('./rich-text-editor'));

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { blogFormSchema, type BlogFormData } from '@/schemas/blog.schema';
@@ -9,18 +9,37 @@ import type { CategoryModel } from '@/domains/category';
 import MultiChipInput, {
   getRandomColor,
 } from '../components/inputs/multi-chip-input';
-import { Info, ImagePlus, Tag, BookOpen, Save, FileText, ArrowLeft, Sparkles } from 'lucide-react';
+import {
+  Info,
+  ImagePlus,
+  Tag,
+  BookOpen,
+  Save,
+  FileText,
+  ArrowLeft,
+  Sparkles,
+  Globe,
+  Languages,
+  Plus,
+  X,
+} from 'lucide-react';
 import { RichTextEditor } from '../components/inputs/rich-text-editor/rich-text-editor';
 import ThumbnailsInput from '../components/inputs/thumbnail-input';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
+
+const AVAILABLE_LANGUAGES = [{ code: 'vi', displayName: 'Vietnamese (vi)' }];
 
 export default function BlogForm({ id }: { id?: string }) {
   const navigate = useNavigate();
   const { token, keycloak } = useAuth();
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [originalContent, setOriginalContent] = useState('');
+  const [originalTranslationContents, setOriginalTranslationContents] = useState<
+    Record<number, string>
+  >({});
   const [fetchingData, setFetchingData] = useState(false);
+  const [activeTranslationTab, setActiveTranslationTab] = useState(0);
 
   const {
     register,
@@ -40,10 +59,17 @@ export default function BlogForm({ id }: { id?: string }) {
       published: false,
       tagNames: [],
       categoryId: '',
+      translations: [],
       rowVersion: 0,
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'translations',
+  });
+
+  const translations = watch('translations');
   const isLoading = isSubmitting || fetchingData;
 
   useEffect(() => {
@@ -60,6 +86,14 @@ export default function BlogForm({ id }: { id?: string }) {
           if (response && response.ok) {
             const res: { data: PostModel } = await response.json();
             setOriginalContent(res.data.content);
+
+            // Store original translation contents for rich text editors
+            const translationContents: Record<number, string> = {};
+            res.data.translations?.forEach((t, index) => {
+              translationContents[index] = t.content;
+            });
+            setOriginalTranslationContents(translationContents);
+
             reset({
               title: res.data.title,
               previewContent: res.data.previewContent,
@@ -68,6 +102,15 @@ export default function BlogForm({ id }: { id?: string }) {
               published: res.data.published,
               tagNames: res.data.tags?.map((tag) => tag.name) ?? [],
               categoryId: res.data.categoryId,
+              translations:
+                res.data.translations?.map((t) => ({
+                  id: t.id,
+                  languageCode: t.languageCode,
+                  title: t.title,
+                  previewContent: t.previewContent,
+                  content: t.content,
+                  slug: t.slug,
+                })) ?? [],
               rowVersion: res.data.rowVersion,
             });
           } else {
@@ -91,9 +134,11 @@ export default function BlogForm({ id }: { id?: string }) {
         published: false,
         tagNames: [],
         categoryId: '',
+        translations: [],
         rowVersion: 0,
       });
       setOriginalContent('');
+      setOriginalTranslationContents({});
     }
   }, [id, reset, token, keycloak]);
 
@@ -110,7 +155,6 @@ export default function BlogForm({ id }: { id?: string }) {
           const res: { data: CategoryModel[] } = await response.json();
           setCategories(res.data);
 
-          // If we don't have a selected category yet and there are categories, select the first one
           const currentCategoryId = watch('categoryId');
           if (!currentCategoryId && res.data.length > 0 && !id) {
             setValue('categoryId', res.data[0].id);
@@ -131,6 +175,14 @@ export default function BlogForm({ id }: { id?: string }) {
       const postData = {
         id,
         ...data,
+        translations: data.translations?.map((t) => ({
+          id: t.id || undefined,
+          languageCode: t.languageCode,
+          title: t.title,
+          previewContent: t.previewContent,
+          content: t.content,
+          slug: t.slug || undefined,
+        })),
       };
 
       const method = id ? 'PUT' : 'POST';
@@ -160,6 +212,44 @@ export default function BlogForm({ id }: { id?: string }) {
       console.error('Error submitting form:', error);
       toast.error('Network error. Please try again.');
     }
+  };
+
+  const addTranslationTab = () => {
+    append({
+      id: '',
+      languageCode: '',
+      title: '',
+      previewContent: '',
+      content: '',
+      slug: '',
+    });
+    setActiveTranslationTab(fields.length);
+  };
+
+  const removeTranslationTab = (index: number) => {
+    remove(index);
+    // Update original contents mapping
+    const newContents: Record<number, string> = {};
+    Object.entries(originalTranslationContents).forEach(([key, value]) => {
+      const keyNum = parseInt(key);
+      if (keyNum < index) {
+        newContents[keyNum] = value;
+      } else if (keyNum > index) {
+        newContents[keyNum - 1] = value;
+      }
+    });
+    setOriginalTranslationContents(newContents);
+
+    if (activeTranslationTab >= fields.length - 1) {
+      setActiveTranslationTab(Math.max(0, fields.length - 2));
+    }
+  };
+
+  const isAddTranslationDisabled = () => {
+    const usedLanguages = translations?.map((t) => t.languageCode) || [];
+    const allUsed = AVAILABLE_LANGUAGES.every((lang) => usedLanguages.includes(lang.code));
+    const maxReached = fields.length >= AVAILABLE_LANGUAGES.length;
+    return allUsed || maxReached;
   };
 
   return (
@@ -240,9 +330,7 @@ export default function BlogForm({ id }: { id?: string }) {
                 render={({ field }) => (
                   <div
                     className={`flex items-center gap-3 border-2 rounded-xl px-4 h-12 transition-all duration-200 ${
-                      field.value
-                        ? 'border-success bg-success/5'
-                        : 'border-base-300 bg-base-100'
+                      field.value ? 'border-success bg-success/5' : 'border-base-300 bg-base-100'
                     }`}
                   >
                     <input
@@ -252,7 +340,9 @@ export default function BlogForm({ id }: { id?: string }) {
                       onChange={field.onChange}
                       disabled={isLoading}
                     />
-                    <span className={`font-medium ${field.value ? 'text-success' : 'text-base-content/60'}`}>
+                    <span
+                      className={`font-medium ${field.value ? 'text-success' : 'text-base-content/60'}`}
+                    >
                       {field.value ? 'Published' : 'Draft'}
                     </span>
                     {field.value && <Sparkles className="w-4 h-4 text-success ml-auto" />}
@@ -333,9 +423,7 @@ export default function BlogForm({ id }: { id?: string }) {
               )}
             />
             <div className="label">
-              <span className="label-text-alt text-base-content/50">
-                Press Enter to add a tag
-              </span>
+              <span className="label-text-alt text-base-content/50">Press Enter to add a tag</span>
             </div>
           </label>
         </div>
@@ -414,6 +502,208 @@ export default function BlogForm({ id }: { id?: string }) {
             <div className="label">
               <span className="label-text-alt text-error">{errors.content.message}</span>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Translations */}
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-neutral hover:shadow-xl transition-shadow duration-300">
+        <div className="card-body">
+          <div className="flex items-start gap-4">
+            <div className="bg-neutral/10 p-3 rounded-xl">
+              <Globe className="w-6 h-6 text-neutral" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="card-title text-lg">Translations</h2>
+                  <p className="text-sm text-base-content/60">
+                    Add translations for different languages
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-neutral btn-outline gap-1"
+                  onClick={addTranslationTab}
+                  disabled={isAddTranslationDisabled() || isLoading}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Language
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="divider my-2"></div>
+
+          {fields.length === 0 ? (
+            <div className="text-center py-10 border-2 border-dashed border-base-300 rounded-xl bg-base-200/30">
+              <div className="bg-neutral/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Languages className="w-8 h-8 text-neutral/50" />
+              </div>
+              <p className="text-base-content/50 text-sm mb-3">No translations added yet</p>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost text-neutral"
+                onClick={addTranslationTab}
+                disabled={isAddTranslationDisabled() || isLoading}
+              >
+                <Plus className="w-4 h-4" />
+                Add first translation
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Translation Tabs */}
+              <div className="tabs tabs-boxed bg-base-200 p-1 rounded-xl mb-4">
+                {fields.map((field, index) => (
+                  <button
+                    key={field.id}
+                    type="button"
+                    className={`tab gap-2 transition-all ${
+                      activeTranslationTab === index
+                        ? 'tab-active bg-neutral text-neutral-content'
+                        : ''
+                    }`}
+                    onClick={() => setActiveTranslationTab(index)}
+                  >
+                    <Globe className="w-3 h-3" />
+                    {translations[index]?.languageCode?.toUpperCase() || 'New'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Translation Content */}
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className={`space-y-4 p-4 bg-base-200/30 rounded-xl ${
+                    activeTranslationTab === index ? '' : 'hidden'
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-base-300">
+                    <span className="text-sm font-medium text-base-content/70 flex items-center gap-2">
+                      <Languages className="w-4 h-4" />
+                      Translation #{index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-ghost text-error hover:bg-error/10 gap-1"
+                      onClick={() => removeTranslationTab(index)}
+                      disabled={isLoading}
+                    >
+                      <X className="w-4 h-4" />
+                      Remove
+                    </button>
+                  </div>
+
+                  {/* Language Selection */}
+                  <label className="form-control w-full">
+                    <div className="label">
+                      <span className="label-text font-medium">Language</span>
+                    </div>
+                    <select
+                      {...register(`translations.${index}.languageCode`)}
+                      className={`select select-bordered w-full focus:select-neutral ${
+                        errors.translations?.[index]?.languageCode ? 'select-error' : ''
+                      }`}
+                      disabled={isLoading}
+                    >
+                      <option value="">Select Language</option>
+                      {AVAILABLE_LANGUAGES.map((lang) => (
+                        <option key={lang.code} value={lang.code}>
+                          {lang.displayName}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.translations?.[index]?.languageCode && (
+                      <div className="label">
+                        <span className="label-text-alt text-error">
+                          {errors.translations[index]?.languageCode?.message}
+                        </span>
+                      </div>
+                    )}
+                  </label>
+
+                  {/* Translated Title */}
+                  <label className="form-control w-full">
+                    <div className="label">
+                      <span className="label-text font-medium">Translated Title</span>
+                    </div>
+                    <input
+                      type="text"
+                      {...register(`translations.${index}.title`)}
+                      className={`input input-bordered w-full focus:input-neutral ${
+                        errors.translations?.[index]?.title ? 'input-error' : ''
+                      }`}
+                      placeholder="Enter translated title"
+                      disabled={isLoading}
+                    />
+                    {errors.translations?.[index]?.title && (
+                      <div className="label">
+                        <span className="label-text-alt text-error">
+                          {errors.translations[index]?.title?.message}
+                        </span>
+                      </div>
+                    )}
+                  </label>
+
+                  {/* Translated Preview Content */}
+                  <label className="form-control w-full">
+                    <div className="label">
+                      <span className="label-text font-medium">Translated Preview</span>
+                    </div>
+                    <textarea
+                      {...register(`translations.${index}.previewContent`)}
+                      className={`textarea textarea-bordered w-full min-h-24 focus:textarea-neutral ${
+                        errors.translations?.[index]?.previewContent ? 'textarea-error' : ''
+                      }`}
+                      placeholder="Enter translated preview content"
+                      disabled={isLoading}
+                    />
+                    {errors.translations?.[index]?.previewContent && (
+                      <div className="label">
+                        <span className="label-text-alt text-error">
+                          {errors.translations[index]?.previewContent?.message}
+                        </span>
+                      </div>
+                    )}
+                  </label>
+
+                  {/* Translated Full Content */}
+                  <div className="form-control w-full">
+                    <div className="label">
+                      <span className="label-text font-medium">Translated Full Content</span>
+                    </div>
+                    <div className="bg-base-100 rounded-xl border-2 border-base-300 overflow-hidden">
+                      <Controller
+                        name={`translations.${index}.content`}
+                        control={control}
+                        render={({ field: contentField }) => (
+                          <RichTextEditor
+                            key={`translation-editor-${index}-${id}`}
+                            id={`translation-content-editor-${index}`}
+                            defaultValue={originalTranslationContents[index] || ''}
+                            onTextChange={(value: string) => {
+                              contentField.onChange(value);
+                            }}
+                            onSelectionChange={() => {}}
+                            readOnly={false}
+                          />
+                        )}
+                      />
+                    </div>
+                    {errors.translations?.[index]?.content && (
+                      <div className="label">
+                        <span className="label-text-alt text-error">
+                          {errors.translations[index]?.content?.message}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </>
           )}
         </div>
       </div>
