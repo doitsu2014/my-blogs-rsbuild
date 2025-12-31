@@ -69,10 +69,12 @@ export const createAuthHeaders = (
 /**
  * Authenticated fetch wrapper
  * Automatically includes Authorization header with Bearer token
+ * Refreshes token if expired before making the request
  *
  * @param url - API endpoint URL
  * @param token - JWT access token from Keycloak
  * @param options - Fetch options (method, body, headers, etc.)
+ * @param keycloak - Optional Keycloak instance for token refresh
  * @returns Promise<Response>
  *
  * @example
@@ -85,9 +87,27 @@ export const createAuthHeaders = (
 export const authenticatedFetch = async (
   url: string,
   token: string | null,
-  options?: RequestInit
+  options?: RequestInit,
+  keycloak?: { updateToken: (minValidity: number) => Promise<boolean>; token?: string }
 ): Promise<Response> => {
-  const headers = createAuthHeaders(token, options?.headers);
+  let currentToken = token;
+
+  // If keycloak instance is provided, try to refresh token if it's about to expire
+  if (keycloak) {
+    try {
+      const refreshed = await keycloak.updateToken(30); // Refresh if expires in 30 seconds
+      if (refreshed && keycloak.token) {
+        currentToken = keycloak.token;
+        // Update localStorage with refreshed token
+        localStorage.setItem('kc_token', keycloak.token);
+      }
+    } catch (error) {
+      console.error('Token refresh failed before request:', error);
+      // Continue with existing token, let the request fail if token is invalid
+    }
+  }
+
+  const headers = createAuthHeaders(currentToken, options?.headers);
 
   return fetch(url, {
     ...options,
