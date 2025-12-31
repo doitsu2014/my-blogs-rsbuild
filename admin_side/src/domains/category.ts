@@ -1,4 +1,4 @@
-import { TagModel } from './tag';
+import type { TagModel } from './tag';
 
 export enum CategoryTypeEnum {
   Blog = 'Blog',
@@ -13,9 +13,9 @@ export interface CategoryModel {
   categoryType: CategoryTypeEnum;
   createdBy: string;
   createdAt: string;
-  categoryTags: TagModel[];
+  tags?: TagModel[];
   rowVersion: number;
-  categoryTranslations: CategoryTranslationModel[];
+  translations?: CategoryTranslationModel[];
 }
 
 export interface CategoryTranslationModel {

@@ -65,7 +65,7 @@ export default function BlogForm({ id }: { id?: string }) {
               content: res.data.content,
               thumbnailPaths: res.data.thumbnailPaths,
               published: res.data.published,
-              tagNames: res.data.postTags.map((tag) => tag.name),
+              tagNames: res.data.tags?.map((tag) => tag.name) ?? [],
               categoryId: res.data.categoryId,
               rowVersion: res.data.rowVersion,
             });

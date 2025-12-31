@@ -331,16 +331,16 @@ export default function AdminCategoriesListPage() {
                     </td>
                     <td className="text-base-content/70 text-sm">{category.createdBy || '-'}</td>
                     <td>
-                      {category.categoryTags?.length > 0 ? (
+                      {category.tags?.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {category.categoryTags.slice(0, 3).map((tag: TagModel) => (
+                          {category.tags.slice(0, 3).map((tag: TagModel) => (
                             <span key={tag.id} className="badge badge-ghost badge-sm">
                               {tag.name}
                             </span>
                           ))}
-                          {category.categoryTags.length > 3 && (
+                          {category.tags.length > 3 && (
                             <span className="badge badge-ghost badge-sm">
-                              +{category.categoryTags.length - 3}
+                              +{category.tags.length - 3}
                             </span>
                           )}
                         </div>

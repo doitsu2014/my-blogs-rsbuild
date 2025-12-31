@@ -17,8 +17,8 @@ export interface PostModel {
   categoryDisplayName: string;
   categorySlug: string;
   rowVersion: number;
-  postTags: TagModel[];
-  postTranslations: PostTranslationModel[];
+  tags?: TagModel[];
+  translations?: PostTranslationModel[];
 }
 
 export interface PostTranslationModel {
@@ -36,6 +36,6 @@ export interface PostInFooterModel {
   previewContent: string;
   slug: string;
   category: CategoryModel;
-  postTranslations: PostTranslationModel[];
+  translations?: PostTranslationModel[];
   createdAt: string;
 }

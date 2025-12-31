@@ -162,13 +162,13 @@ export default function AdminBlogsPage() {
                     </td>
                     <td>
                       <div className="flex flex-wrap gap-1">
-                        {blog.postTags &&
-                          blog.postTags.slice(0, 3).map((tag) => (
+                        {blog.tags &&
+                          blog.tags.slice(0, 3).map((tag) => (
                             <span key={tag.id} className="badge badge-secondary mr-1">
                               {tag.name}
                             </span>
                           ))}
-                        {blog.postTags && blog.postTags.length > 3 && (
+                        {blog.tags && blog.tags.length > 3 && (
                           <span className="badge badge-ghost">...</span>
                         )}
                       </div>

@@ -13,7 +13,7 @@ import { CategoryTypeEnum, type CategoryModel } from '@/domains/category';
 import type { TagModel } from '@/domains/tag';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
-import { Plus, Trash2, Save, ArrowLeft, Languages, X } from 'lucide-react';
+import { Plus, Save, ArrowLeft, Languages, X } from 'lucide-react';
 
 const AVAILABLE_LANGUAGES = [{ code: 'vi', displayName: 'Vietnamese (vi)' }];
 
@@ -61,17 +61,17 @@ export default function CategoryForm({ id }: { id?: string }) {
             keycloak || undefined,
           );
           if (response && response.ok) {
-            const data: CategoryModel = await response.json();
+            const res: { data: CategoryModel } = await response.json();
             reset({
-              displayName: data.displayName,
-              categoryType: data.categoryType,
-              tagNames: data.categoryTags.map((tag: TagModel) => tag.name),
-              translations: data.categoryTranslations.map((ct) => ({
+              displayName: res.data.displayName,
+              categoryType:  res.data.categoryType,
+              tagNames: res.data.tags?.map((tag: TagModel) => tag.name),
+              translations: res.data.translations?.map((ct) => ({
                 id: ct.id,
                 languageCode: ct.languageCode,
                 displayName: ct.displayName,
               })),
-              rowVersion: data.rowVersion,
+              rowVersion: res.data.rowVersion,
             });
           } else {
             toast.error('Failed to load category');
@@ -105,7 +105,7 @@ export default function CategoryForm({ id }: { id?: string }) {
           categoryType: data.categoryType,
           tagNames: data.tagNames,
           rowVersion: data.rowVersion,
-          translations: data.translations.map((translation) => ({
+          translations: data.translations?.map((translation) => ({
             displayName: translation.displayName,
             id: translation.id || undefined,
             languageCode: translation.languageCode,
@@ -138,7 +138,7 @@ export default function CategoryForm({ id }: { id?: string }) {
           displayName: data.displayName,
           categoryType: data.categoryType,
           tagNames: data.tagNames,
-          translations: data.translations.map((translation) => ({
+          translations: data.translations?.map((translation) => ({
             displayName: translation.displayName,
             languageCode: translation.languageCode,
           })),
@@ -185,7 +185,7 @@ export default function CategoryForm({ id }: { id?: string }) {
   };
 
   const isAddTabDisabled = () => {
-    const usedLanguages = translations.map((t) => t.languageCode);
+    const usedLanguages = translations?.map((t) => t.languageCode) || [];
     const conditionEveryLanguageCodesUsed = AVAILABLE_LANGUAGES.every((lang) =>
       usedLanguages.includes(lang.code),
     );
@@ -261,7 +261,7 @@ export default function CategoryForm({ id }: { id?: string }) {
                   }}
                   className="flex flex-wrap border border-base-300 rounded-lg p-3 min-h-[48px] bg-base-100"
                   loading={isLoading}
-                  formControlName="categoryTags"
+                  formControlName="tags"
                 />
               )}
             />

@@ -9,7 +9,7 @@ const translationSchema = z.object({
 
 export const categoryFormSchema = z.object({
   displayName: z.string().min(1, 'Display name is required').max(100, 'Display name must be less than 100 characters'),
-  categoryType: z.nativeEnum(CategoryTypeEnum),
+  categoryType: z.enum(CategoryTypeEnum),
   tagNames: z.array(z.string()).default([]),
   translations: z.array(translationSchema).default([]),
   rowVersion: z.number().default(0),
