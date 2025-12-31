@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { blogFormSchema, type BlogFormData } from '@/schemas/blog.schema';
 import type { PostModel } from '@/domains/post';
 import type { CategoryModel } from '@/domains/category';
 import MultiChipInput, {
@@ -14,21 +18,38 @@ import { useAuth } from '@/auth/AuthContext';
 export default function BlogForm({ id }: { id?: string }) {
   const navigate = useNavigate();
   const { token } = useAuth();
-  const [title, setTitle] = useState('');
-  const [previewContent, setPreviewContent] = useState('');
-  const [content, setContent] = useState('');
-  const [originalContent, setOriginalContent] = useState('');
-  const [thumbnailPaths, setThumbnailPaths] = useState<string[]>([]);
-  const [published, setPublished] = useState(false);
-  const [rowVersion, setRowVersion] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [tags, setTags] = useState<{ label: string; color: string }[]>([]);
   const [categories, setCategories] = useState<CategoryModel[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [originalContent, setOriginalContent] = useState('');
+  const [fetchingData, setFetchingData] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<BlogFormData>({
+    resolver: zodResolver(blogFormSchema),
+    defaultValues: {
+      title: '',
+      previewContent: '',
+      content: '',
+      thumbnailPaths: [],
+      published: false,
+      tagNames: [],
+      categoryId: '',
+      rowVersion: 0,
+    },
+  });
+
+  const isLoading = isSubmitting || fetchingData;
 
   useEffect(() => {
     if (id) {
       const fetchPost = async () => {
+        setFetchingData(true);
         try {
           const response = await authenticatedFetch(
             getApiUrl(`/posts/${id}`),
@@ -37,40 +58,43 @@ export default function BlogForm({ id }: { id?: string }) {
           );
           if (response && response.ok) {
             const res: { data: PostModel } = await response.json();
-            setTitle(res.data.title);
-            setPreviewContent(res.data.previewContent);
-            setContent(res.data.content);
             setOriginalContent(res.data.content);
-            setThumbnailPaths(res.data.thumbnailPaths);
-            setPublished(res.data.published);
-            setRowVersion(res.data.rowVersion);
-            setTags(
-              res.data.postTags.map((tag) => ({
-                label: tag.name,
-                color: getRandomColor(),
-              })),
-            );
-            setSelectedCategoryId(res.data.categoryId);
+            reset({
+              title: res.data.title,
+              previewContent: res.data.previewContent,
+              content: res.data.content,
+              thumbnailPaths: res.data.thumbnailPaths,
+              published: res.data.published,
+              tagNames: res.data.postTags.map((tag) => tag.name),
+              categoryId: res.data.categoryId,
+              rowVersion: res.data.rowVersion,
+            });
+          } else {
+            toast.error('Failed to load post data');
           }
         } catch (error) {
           console.error('Error fetching post:', error);
+          toast.error('Error loading post');
         } finally {
-          setLoading(false);
+          setFetchingData(false);
         }
       };
 
-      setLoading(true);
       fetchPost();
     } else {
-      setTitle('');
-      setPreviewContent('');
-      setContent('');
-      setThumbnailPaths([]);
-      setPublished(false);
-      setRowVersion(0);
-      setTags([]);
+      reset({
+        title: '',
+        previewContent: '',
+        content: '',
+        thumbnailPaths: [],
+        published: false,
+        tagNames: [],
+        categoryId: '',
+        rowVersion: 0,
+      });
+      setOriginalContent('');
     }
-  }, [id]);
+  }, [id, reset, token]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -81,39 +105,30 @@ export default function BlogForm({ id }: { id?: string }) {
           { cache: 'no-store' },
         );
         if (response.ok) {
-          const res: {data: CategoryModel[]} = await response.json();
+          const res: { data: CategoryModel[] } = await response.json();
           setCategories(res.data);
 
           // If we don't have a selected category yet and there are categories, select the first one
-          if (!selectedCategoryId && res.data.length > 0 && !id) {
-            setSelectedCategoryId(res.data[0].id);
+          const currentCategoryId = watch('categoryId');
+          if (!currentCategoryId && res.data.length > 0 && !id) {
+            setValue('categoryId', res.data[0].id);
           }
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
-        // Set empty array if API not available
+        toast.error('Failed to load categories');
         setCategories([]);
       }
     };
 
     fetchCategories();
-  }, [id, selectedCategoryId]);
+  }, [id, token, setValue, watch]);
 
-  const submitHandler = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setLoading(true);
-
+  const onSubmit = async (data: BlogFormData) => {
     try {
       const postData = {
         id,
-        title,
-        previewContent,
-        content,
-        thumbnailPaths,
-        published,
-        rowVersion,
-        tagNames: tags.map((tag) => tag.label),
-        categoryId: selectedCategoryId,
+        ...data,
       };
 
       const method = id ? 'PUT' : 'POST';
@@ -127,24 +142,22 @@ export default function BlogForm({ id }: { id?: string }) {
       });
 
       if (response.ok) {
+        toast.success(id ? 'Post updated successfully' : 'Post created successfully');
         navigate('/admin/blogs');
       } else {
-        console.error(await response.json(), response.status);
+        const errorData = await response.json();
+        console.error(errorData, response.status);
+        toast.error(errorData.message || 'Failed to save post');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-    } finally {
-      setLoading(false);
+      toast.error('Network error. Please try again.');
     }
-  };
-
-  const handleThumbnailUploadSuccess = (urls: string[]) => {
-    setThumbnailPaths([...urls]);
   };
 
   return (
     <form
-      onSubmit={submitHandler}
+      onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col space-y-4 max-w-6xl mx-auto"
     >
       {/* Basic Information */}
@@ -161,14 +174,16 @@ export default function BlogForm({ id }: { id?: string }) {
             </div>
             <input
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="input input-bordered w-full"
+              {...register('title')}
+              className={`input input-bordered w-full ${errors.title ? 'input-error' : ''}`}
               placeholder="Enter an engaging title"
-              required
-              name="title"
-              disabled={loading}
+              disabled={isLoading}
             />
+            {errors.title && (
+              <div className="label">
+                <span className="label-text-alt text-error">{errors.title.message}</span>
+              </div>
+            )}
           </label>
 
           <label className="form-control w-full mt-4">
@@ -176,12 +191,9 @@ export default function BlogForm({ id }: { id?: string }) {
               <span className="label-text font-medium">Category</span>
             </div>
             <select
-              className="select select-bordered w-full"
-              disabled={loading || categories.length === 0}
-              name="category"
-              required
-              value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              {...register('categoryId')}
+              className={`select select-bordered w-full ${errors.categoryId ? 'select-error' : ''}`}
+              disabled={isLoading || categories.length === 0}
             >
               <option value="" disabled>
                 Select a category
@@ -192,6 +204,11 @@ export default function BlogForm({ id }: { id?: string }) {
                 </option>
               ))}
             </select>
+            {errors.categoryId && (
+              <div className="label">
+                <span className="label-text-alt text-error">{errors.categoryId.message}</span>
+              </div>
+            )}
             {categories.length === 0 && (
               <div className="label">
                 <span className="label-text-alt text-error">
@@ -205,18 +222,24 @@ export default function BlogForm({ id }: { id?: string }) {
             <div className="label">
               <span className="label-text font-medium">Published Status:</span>
             </div>
-            <label className="cursor-pointer label justify-start gap-3 bg-base-100 rounded-md p-3">
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={published}
-                onChange={(e) => setPublished(e.target.checked)}
-                disabled={loading}
-              />
-              <span className="label-text">
-                {published ? 'Published' : 'Draft'}
-              </span>
-            </label>
+            <Controller
+              name="published"
+              control={control}
+              render={({ field }) => (
+                <label className="cursor-pointer label justify-start gap-3 bg-base-100 rounded-md p-3">
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={field.value}
+                    onChange={field.onChange}
+                    disabled={isLoading}
+                  />
+                  <span className="label-text">
+                    {field.value ? 'Published' : 'Draft'}
+                  </span>
+                </label>
+              )}
+            />
           </div>
         </div>
       </div>
@@ -228,9 +251,15 @@ export default function BlogForm({ id }: { id?: string }) {
             <ImagePlus size={18} />
             Thumbnails
           </h3>
-          <ThumbnailsInput
-            value={thumbnailPaths}
-            onUploadSuccess={handleThumbnailUploadSuccess}
+          <Controller
+            name="thumbnailPaths"
+            control={control}
+            render={({ field }) => (
+              <ThumbnailsInput
+                value={field.value}
+                onUploadSuccess={(urls) => field.onChange([...urls])}
+              />
+            )}
           />
         </div>
       </div>
@@ -248,19 +277,23 @@ export default function BlogForm({ id }: { id?: string }) {
               <span className="label-text font-medium">Add Tags</span>
               <span className="label-text-alt">Press Enter to add</span>
             </div>
-            <MultiChipInput
-              chips={tags}
-              setChips={(chips: { label: string; color: string }[]) => {
-                setTags(
-                  chips.map((chip) => ({
-                    label: chip.label.toLowerCase(),
-                    color: chip.color,
-                  })),
-                );
-              }}
-              className="flex flex-wrap border border-base-300 rounded-md p-2 min-h-16 bg-base-200"
-              loading={loading}
-              formControlName="tags"
+            <Controller
+              name="tagNames"
+              control={control}
+              render={({ field }) => (
+                <MultiChipInput
+                  chips={field.value.map((tag) => ({
+                    label: tag,
+                    color: getRandomColor(),
+                  }))}
+                  setChips={(chips: { label: string; color: string }[]) => {
+                    field.onChange(chips.map((chip) => chip.label.toLowerCase()));
+                  }}
+                  className="flex flex-wrap border border-base-300 rounded-md p-2 min-h-16 bg-base-200"
+                  loading={isLoading}
+                  formControlName="tags"
+                />
+              )}
             />
           </label>
         </div>
@@ -282,14 +315,16 @@ export default function BlogForm({ id }: { id?: string }) {
               </span>
             </div>
             <textarea
-              value={previewContent}
-              onChange={(e) => setPreviewContent(e.target.value)}
-              className="textarea textarea-bordered w-full min-h-24"
+              {...register('previewContent')}
+              className={`textarea textarea-bordered w-full min-h-24 ${errors.previewContent ? 'textarea-error' : ''}`}
               placeholder="Enter a brief preview of your blog post"
-              required
-              name="previewContent"
-              disabled={loading}
+              disabled={isLoading}
             />
+            {errors.previewContent && (
+              <div className="label">
+                <span className="label-text-alt text-error">{errors.previewContent.message}</span>
+              </div>
+            )}
           </label>
         </div>
       </div>
@@ -306,17 +341,28 @@ export default function BlogForm({ id }: { id?: string }) {
             className="form-control w-full bg-base-100 rounded-md border border-base-300"
             key="main-editor"
           >
-            <RichTextEditor
-              key={`editor-${id}`}
-              id="content-editor"
-              defaultValue={originalContent}
-              onTextChange={(e: any) => {
-                setContent(e);
-              }}
-              onSelectionChange={() => {}}
-              readOnly={false}
+            <Controller
+              name="content"
+              control={control}
+              render={({ field }) => (
+                <RichTextEditor
+                  key={`editor-${id}`}
+                  id="content-editor"
+                  defaultValue={originalContent}
+                  onTextChange={(value: string) => {
+                    field.onChange(value);
+                  }}
+                  onSelectionChange={() => {}}
+                  readOnly={false}
+                />
+              )}
             />
           </div>
+          {errors.content && (
+            <div className="label">
+              <span className="label-text-alt text-error">{errors.content.message}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -328,16 +374,16 @@ export default function BlogForm({ id }: { id?: string }) {
               type="button"
               className="btn btn-ghost"
               onClick={() => navigate('/admin/blogs')}
-              disabled={loading}
+              disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={loading}
+              disabled={isLoading}
             >
-              {loading ? (
+              {isSubmitting ? (
                 <>
                   <span className="loading loading-spinner loading-sm"></span>
                   {id ? 'Updating...' : 'Creating...'}
@@ -352,9 +398,6 @@ export default function BlogForm({ id }: { id?: string }) {
           </div>
         </div>
       </div>
-
-      <input type="hidden" name="rowVersion" value={rowVersion} />
-      <input type="hidden" name="id" value={id || ''} />
     </form>
   );
 }

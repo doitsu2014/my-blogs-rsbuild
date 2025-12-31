@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { getMediaUploadApiUrl, createAuthHeaders } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
 
@@ -49,7 +50,7 @@ const ThumbnailsInput: React.FC<ThumbnailsInputProps> = ({
       onUploadSuccess([...thumbnails, ...uploadedUrls]);
     } catch (error) {
       console.error('Error uploading images:', error);
-      alert('Image upload failed. Please try again.');
+      toast.error('Image upload failed. Please try again.');
     } finally {
       setIsUploading(false);
     }

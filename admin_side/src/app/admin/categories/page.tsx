@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { ChevronDown, ChevronUp, Home, Pencil, Trash } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Breadcrumbs from '../components/my-breadcrumbs';
@@ -62,16 +63,17 @@ export default function AdminCategoriesListPage() {
       );
 
       if (response.ok) {
-        // Remove deleted category from the state
         setCategories(categories.filter(c => c.id !== categoryToDelete.id));
         setIsDeleteModalOpen(false);
         setCategoryToDelete(null);
+        toast.success('Category deleted successfully');
       } else {
         console.error('Failed to delete category');
-        // Handle error case, perhaps show a toast notification
+        toast.error('Failed to delete category');
       }
     } catch (error) {
       console.error('Error deleting category:', error);
+      toast.error('An error occurred while deleting the category');
     } finally {
       setIsDeleting(false);
     }

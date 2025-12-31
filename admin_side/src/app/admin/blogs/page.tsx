@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import type { PostModel } from '@/domains/post';
 import Breadcrumbs from '../components/my-breadcrumbs';
 import { Home, Info, Pencil, Search, Trash2 } from 'lucide-react';
@@ -56,12 +57,14 @@ export default function AdminBlogsPage() {
         setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog.id !== blogToDelete.id));
         setIsDeleteModalOpen(false);
         setBlogToDelete(null);
+        toast.success('Blog deleted successfully');
       } else {
         console.error('Failed to delete blog:', response.statusText);
+        toast.error('Failed to delete blog');
       }
     } catch (error) {
       console.error('Error deleting blog:', error);
-      alert('An error occurred while deleting the blog.');
+      toast.error('An error occurred while deleting the blog.');
     } finally {
       setIsDeleting(false);
     }

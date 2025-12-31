@@ -4,8 +4,17 @@ import { pluginReact } from '@rsbuild/plugin-react';
 const { publicVars } = loadEnv();
 
 export default defineConfig({
+  html: {
+    // Set DaisyUI theme on the html element
+    htmlAttrs: {
+      'data-theme': 'emerald',
+    },
+  },
   server: {
-    port: 3002
+    port: 3002,
+    publicDir: {
+      name: 'public',
+    },
   },
   resolve: {
     alias: {

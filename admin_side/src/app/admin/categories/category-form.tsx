@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { categoryFormSchema, type CategoryFormData } from '@/schemas/category.schema';
 import MultiChipInput, {
   getRandomColor,
 } from '../components/inputs/multi-chip-input';
@@ -9,27 +13,46 @@ import { CategoryTypeEnum, type CategoryModel } from '@/domains/category';
 import type { TagModel } from '@/domains/tag';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
+import { Plus, Trash2, Save } from 'lucide-react';
 
 const AVAILABLE_LANGUAGES = [{ code: 'vi', displayName: 'Vietnamese (vi)' }];
 
 export default function CategoryForm({ id }: { id?: string }) {
   const navigate = useNavigate();
   const { token } = useAuth();
-  const [displayName, setDisplayName] = useState('');
-  const [categoryType, setCategoryType] = useState(CategoryTypeEnum.Blog);
-  const [categoryTags, setCategoryTags] = useState<
-    { label: string; color: string }[]
-  >([]);
-  const [rowVersion, setRowVersion] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [categoryTranslations, setCategoryTranslations] = useState<
-    { id: string; languageCode: string; displayName: string }[]
-  >([]);
+  const [fetchingData, setFetchingData] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<CategoryFormData>({
+    resolver: zodResolver(categoryFormSchema),
+    defaultValues: {
+      displayName: '',
+      categoryType: CategoryTypeEnum.Blog,
+      tagNames: [],
+      translations: [],
+      rowVersion: 0,
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'translations',
+  });
+
+  const translations = watch('translations');
+  const isLoading = isSubmitting || fetchingData;
 
   useEffect(() => {
     if (id) {
-      const fetchCategories = async () => {
+      const fetchCategory = async () => {
+        setFetchingData(true);
         try {
           const response = await authenticatedFetch(
             getApiUrl(`/categories/${id}`),
@@ -38,52 +61,50 @@ export default function CategoryForm({ id }: { id?: string }) {
           );
           if (response && response.ok) {
             const data: CategoryModel = await response.json();
-            setDisplayName(data.displayName);
-            setCategoryType(data.categoryType);
-            setCategoryTags(
-              data.categoryTags.map((tag: TagModel) => ({
-                label: tag.name,
-                color: getRandomColor(),
+            reset({
+              displayName: data.displayName,
+              categoryType: data.categoryType,
+              tagNames: data.categoryTags.map((tag: TagModel) => tag.name),
+              translations: data.categoryTranslations.map((ct) => ({
+                id: ct.id,
+                languageCode: ct.languageCode,
+                displayName: ct.displayName,
               })),
-            );
-            setCategoryTranslations(
-              data.categoryTranslations.map((ct) => ({
-                ...ct,
-              })),
-            );
-            setRowVersion(data.rowVersion);
+              rowVersion: data.rowVersion,
+            });
+          } else {
+            toast.error('Failed to load category');
           }
         } catch (error) {
           console.error('Failed to load category:', error);
+          toast.error('Error loading category');
         } finally {
-          setLoading(false);
+          setFetchingData(false);
         }
       };
 
-      setLoading(true);
-      fetchCategories();
+      fetchCategory();
     } else {
-      setDisplayName('');
-      setCategoryType(CategoryTypeEnum.Blog);
-      setCategoryTags([]);
-      setCategoryTranslations([]);
-      setRowVersion(0);
+      reset({
+        displayName: '',
+        categoryType: CategoryTypeEnum.Blog,
+        tagNames: [],
+        translations: [],
+        rowVersion: 0,
+      });
     }
-  }, [id]);
+  }, [id, reset, token]);
 
-  const submitHandler = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setLoading(true);
-
+  const onSubmit = async (data: CategoryFormData) => {
     try {
       if (id) {
         const categoryData: UpdateCategoryModel = {
           id,
-          displayName,
-          categoryType,
-          tagNames: categoryTags.map((tag) => tag.label),
-          rowVersion,
-          translations: categoryTranslations.map((translation) => ({
+          displayName: data.displayName,
+          categoryType: data.categoryType,
+          tagNames: data.tagNames,
+          rowVersion: data.rowVersion,
+          translations: data.translations.map((translation) => ({
             displayName: translation.displayName,
             id: translation.id || undefined,
             languageCode: translation.languageCode,
@@ -103,17 +124,19 @@ export default function CategoryForm({ id }: { id?: string }) {
         );
 
         if (updateResponse.ok) {
+          toast.success('Category updated successfully');
           navigate('/admin/categories');
         } else {
-          console.error(await updateResponse.json(), updateResponse.status);
+          const errorData = await updateResponse.json();
+          console.error(errorData, updateResponse.status);
+          toast.error(errorData.message || 'Failed to update category');
         }
       } else {
-        console.info('Creating category');
         const categoryData: CreateCategoryModel = {
-          displayName,
-          categoryType,
-          tagNames: categoryTags.map((tag) => tag.label),
-          translations: categoryTranslations.map((translation) => ({
+          displayName: data.displayName,
+          categoryType: data.categoryType,
+          tagNames: data.tagNames,
+          translations: data.translations.map((translation) => ({
             displayName: translation.displayName,
             languageCode: translation.languageCode,
           })),
@@ -132,183 +155,229 @@ export default function CategoryForm({ id }: { id?: string }) {
         );
 
         if (createResponse.ok) {
+          toast.success('Category created successfully');
           navigate('/admin/categories');
         } else {
-          console.error(await createResponse.json(), createResponse.status);
+          const errorData = await createResponse.json();
+          console.error(errorData, createResponse.status);
+          toast.error(errorData.message || 'Failed to create category');
         }
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-    } finally {
-      setLoading(false);
+      toast.error('Network error. Please try again.');
     }
   };
 
   const addTranslationTab = () => {
-    setCategoryTranslations([
-      ...categoryTranslations,
-      { id: '', languageCode: '', displayName: '' },
-    ]);
+    append({ id: '', languageCode: '', displayName: '' });
+    setActiveTab(fields.length);
+  };
+
+  const removeTranslationTab = (index: number) => {
+    remove(index);
+    if (activeTab >= fields.length - 1) {
+      setActiveTab(Math.max(0, fields.length - 2));
+    }
   };
 
   const isAddTabDisabled = () => {
-    const usedLanguages = categoryTranslations.map((t) => t.languageCode);
+    const usedLanguages = translations.map((t) => t.languageCode);
     const conditionEveryLanguageCodesUsed = AVAILABLE_LANGUAGES.every((lang) =>
       usedLanguages.includes(lang.code),
     );
-    const conditionMaxTabs =
-      categoryTranslations.length >= AVAILABLE_LANGUAGES.length;
+    const conditionMaxTabs = fields.length >= AVAILABLE_LANGUAGES.length;
     return conditionEveryLanguageCodesUsed || conditionMaxTabs;
-  };
-
-  const updateTranslation = (
-    index: number,
-    field: 'languageCode' | 'displayName',
-    value: string,
-  ) => {
-    const updatedTranslations = [...categoryTranslations];
-    updatedTranslations[index][field] = value;
-    setCategoryTranslations(updatedTranslations);
-  };
-
-  const handleTabClick = (index: number) => {
-    setActiveTab(index);
   };
 
   return (
     <form
-      onSubmit={submitHandler}
+      onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col space-y-4 w-full max-w-md"
     >
       <label className="form-control w-full">
-        <span className="label-text">Display Name</span>
+        <div className="label">
+          <span className="label-text font-medium">Display Name</span>
+        </div>
         <input
           type="text"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          className="input input-bordered w-full"
+          {...register('displayName')}
+          className={`input input-bordered w-full ${errors.displayName ? 'input-error' : ''}`}
           placeholder="Enter display name"
-          required
-          name="displayName"
-          disabled={loading}
+          disabled={isLoading}
         />
+        {errors.displayName && (
+          <div className="label">
+            <span className="label-text-alt text-error">{errors.displayName.message}</span>
+          </div>
+        )}
       </label>
+
       <label className="form-control w-full">
-        <span className="label-text">Category Type</span>
+        <div className="label">
+          <span className="label-text font-medium">Category Type</span>
+        </div>
         <select
-          name="categoryType"
-          value={categoryType}
-          onChange={(e) => {
-            setCategoryType(e.target.value as CategoryTypeEnum);
-          }}
-          className="select select-bordered w-full"
-          disabled={loading}
+          {...register('categoryType')}
+          className={`select select-bordered w-full ${errors.categoryType ? 'select-error' : ''}`}
+          disabled={isLoading}
         >
           <option value={CategoryTypeEnum.Blog}>Blog</option>
           <option value={CategoryTypeEnum.Other}>Other</option>
         </select>
+        {errors.categoryType && (
+          <div className="label">
+            <span className="label-text-alt text-error">{errors.categoryType.message}</span>
+          </div>
+        )}
       </label>
+
       <label className="form-control w-full">
-        <span className="label-text">Tags</span>
-        <MultiChipInput
-          chips={categoryTags}
-          setChips={(chips: { label: string; color: string }[]) => {
-            setCategoryTags(
-              chips.map((chip) => ({
-                label: chip.label.toLowerCase(),
-                color: chip.color,
-              })),
-            );
-          }}
-          className="flex flex-wrap border border-base-300 rounded-md p-2"
-          loading={loading}
-          formControlName="categoryTags"
+        <div className="label">
+          <span className="label-text font-medium">Tags</span>
+        </div>
+        <Controller
+          name="tagNames"
+          control={control}
+          render={({ field }) => (
+            <MultiChipInput
+              chips={field.value.map((tag) => ({
+                label: tag,
+                color: getRandomColor(),
+              }))}
+              setChips={(chips: { label: string; color: string }[]) => {
+                field.onChange(chips.map((chip) => chip.label.toLowerCase()));
+              }}
+              className="flex flex-wrap border border-base-300 rounded-md p-2"
+              loading={isLoading}
+              formControlName="categoryTags"
+            />
+          )}
         />
       </label>
+
       <div className="form-control w-full">
-        <span className="label-text">Category Translations</span>
-        <div className="tabs">
-          <div className="tabs-box">
-            {categoryTranslations?.map((translation, index) => (
-              <button
-                key={index}
-                className={`tab ${activeTab === index ? 'tab-active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleTabClick(index);
-                }}
-              >
-                {translation.languageCode || `Tab ${index + 1}`}
-              </button>
-            ))}
+        <div className="label">
+          <span className="label-text font-medium">Category Translations</span>
+        </div>
+        <div className="tabs tabs-box">
+          {fields.map((field, index) => (
             <button
+              key={field.id}
               type="button"
-              className="btn btn-sm btn-outline ml-2"
-              onClick={addTranslationTab}
-              disabled={isAddTabDisabled()}
+              className={`tab ${activeTab === index ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab(index)}
             >
-              + Add Tab
+              {translations[index]?.languageCode || `Tab ${index + 1}`}
             </button>
-          </div>
-          <div className="mt-2">
-            {categoryTranslations?.map((translation, index) => (
-              <div
-                key={index}
-                className={`p-4 border border-base-300 rounded-md ${
-                  activeTab === index ? '' : 'hidden'
-                }`}
-              >
-                <label className="form-control w-full">
-                  <span className="label-text">Language Code</span>
-                  <select
-                    value={translation.languageCode}
-                    onChange={(e) => {
-                      updateTranslation(index, 'languageCode', e.target.value);
-                      if (activeTab === index) {
-                        handleTabClick(index); // Ensure tab name updates dynamically
-                      }
-                    }}
-                    className="select select-bordered w-full"
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">Select Language</option>
-                    {AVAILABLE_LANGUAGES.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.displayName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="form-control w-full mt-4">
-                  <span className="label-text">Display Name</span>
-                  <input
-                    type="text"
-                    value={translation.displayName}
-                    onChange={(e) =>
-                      updateTranslation(index, 'displayName', e.target.value)
-                    }
-                    className="input input-bordered w-full"
-                    placeholder="Enter translated display name"
-                    required
-                    disabled={loading}
-                  />
-                </label>
+          ))}
+          <button
+            type="button"
+            className="btn btn-sm btn-outline ml-2"
+            onClick={addTranslationTab}
+            disabled={isAddTabDisabled()}
+          >
+            <Plus size={16} />
+            Add
+          </button>
+        </div>
+
+        <div className="mt-2">
+          {fields.map((field, index) => (
+            <div
+              key={field.id}
+              className={`p-4 border border-base-300 rounded-md ${
+                activeTab === index ? '' : 'hidden'
+              }`}
+            >
+              <div className="flex justify-end mb-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost text-error"
+                  onClick={() => removeTranslationTab(index)}
+                  disabled={isLoading}
+                >
+                  <Trash2 size={16} />
+                  Remove
+                </button>
               </div>
-            ))}
-          </div>
+
+              <label className="form-control w-full">
+                <div className="label">
+                  <span className="label-text">Language Code</span>
+                </div>
+                <select
+                  {...register(`translations.${index}.languageCode`)}
+                  className={`select select-bordered w-full ${
+                    errors.translations?.[index]?.languageCode ? 'select-error' : ''
+                  }`}
+                  disabled={isLoading}
+                >
+                  <option value="">Select Language</option>
+                  {AVAILABLE_LANGUAGES.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.displayName}
+                    </option>
+                  ))}
+                </select>
+                {errors.translations?.[index]?.languageCode && (
+                  <div className="label">
+                    <span className="label-text-alt text-error">
+                      {errors.translations[index]?.languageCode?.message}
+                    </span>
+                  </div>
+                )}
+              </label>
+
+              <label className="form-control w-full mt-4">
+                <div className="label">
+                  <span className="label-text">Display Name</span>
+                </div>
+                <input
+                  type="text"
+                  {...register(`translations.${index}.displayName`)}
+                  className={`input input-bordered w-full ${
+                    errors.translations?.[index]?.displayName ? 'input-error' : ''
+                  }`}
+                  placeholder="Enter translated display name"
+                  disabled={isLoading}
+                />
+                {errors.translations?.[index]?.displayName && (
+                  <div className="label">
+                    <span className="label-text-alt text-error">
+                      {errors.translations[index]?.displayName?.message}
+                    </span>
+                  </div>
+                )}
+              </label>
+            </div>
+          ))}
         </div>
       </div>
-      <input
-        type="hidden"
-        name="categoryTranslations"
-        value={JSON.stringify(categoryTranslations)}
-      />
-      <input type="hidden" name="rowVersion" value={rowVersion} />
-      <input type="hidden" name="id" value={id} />
-      <button type="submit" className="btn btn-primary" disabled={loading}>
-        {loading ? 'Saving...' : id ? 'Update' : 'Create'}
-      </button>
+
+      <div className="flex gap-2 pt-4">
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={() => navigate('/admin/categories')}
+          disabled={isLoading}
+        >
+          Cancel
+        </button>
+        <button type="submit" className="btn btn-primary flex-1" disabled={isLoading}>
+          {isSubmitting ? (
+            <>
+              <span className="loading loading-spinner loading-sm"></span>
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save size={18} />
+              {id ? 'Update' : 'Create'}
+            </>
+          )}
+        </button>
+      </div>
     </form>
   );
 }

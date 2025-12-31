@@ -2,8 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// Set DaisyUI theme to abyss
-document.documentElement.setAttribute('data-theme', 'abyss');
+// Set DaisyUI theme to emerald
+document.documentElement.setAttribute('data-theme', 'emerald');
 
 const rootEl = document.getElementById('root');
 if (rootEl) {

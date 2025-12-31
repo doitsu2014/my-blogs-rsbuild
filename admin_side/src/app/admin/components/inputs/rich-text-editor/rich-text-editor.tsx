@@ -74,7 +74,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             ['link', 'image', 'video'],
             ['table-better'],
             ['clean'],
-            ['fullscreen'],
           ],
         },
         'table-better': {
@@ -96,8 +95,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           okText: 'Save',
           cancelText: 'Cancel',
           buttonHTML: '&lt;&gt;',
+          prependSelector: 'div#ql-html', // a string used to select where you want to insert the overlayContainer, default: null (appends to body),
           buttonTitle: 'Edit HTML',
-          syntax: false,
+          syntax: true,
+          editorModules: {}
         },
         fullscreen: {},
       },

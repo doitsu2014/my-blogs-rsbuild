@@ -606,3 +606,251 @@ This example demonstrates:
 - Tailwind CSS classes
 - lucide-react icons
 - Authentication integration
+
+## Form Handling with react-hook-form + zod
+
+The project uses react-hook-form for form state management and zod for schema validation.
+
+### Setup
+```typescript
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+// Define schema
+const formSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200),
+  email: z.string().email('Invalid email'),
+  published: z.boolean().default(false),
+  tags: z.array(z.string()).default([]),
+});
+
+type FormData = z.infer<typeof formSchema>;
+```
+
+### Basic Form Component
+```typescript
+export default function MyForm() {
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: '',
+      email: '',
+      published: false,
+      tags: [],
+    },
+  });
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      // Submit logic
+      toast.success('Saved successfully');
+    } catch (error) {
+      toast.error('Failed to save');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Simple input with register */}
+      <input
+        {...register('title')}
+        className={`input input-bordered ${errors.title ? 'input-error' : ''}`}
+      />
+      {errors.title && (
+        <span className="text-error">{errors.title.message}</span>
+      )}
+
+      {/* Complex input with Controller */}
+      <Controller
+        name="published"
+        control={control}
+        render={({ field }) => (
+          <input
+            type="checkbox"
+            checked={field.value}
+            onChange={field.onChange}
+          />
+        )}
+      />
+
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Saving...' : 'Save'}
+      </button>
+    </form>
+  );
+}
+```
+
+### useFieldArray for Dynamic Lists
+```typescript
+import { useFieldArray } from 'react-hook-form';
+
+const { fields, append, remove } = useFieldArray({
+  control,
+  name: 'translations',
+});
+
+// Render dynamic fields
+{fields.map((field, index) => (
+  <div key={field.id}>
+    <input {...register(`translations.${index}.value`)} />
+    <button onClick={() => remove(index)}>Remove</button>
+  </div>
+))}
+<button onClick={() => append({ value: '' })}>Add</button>
+```
+
+### Zod Schema Patterns
+```typescript
+// Location: src/schemas/
+
+// Basic string validation
+title: z.string().min(1, 'Required').max(200, 'Too long')
+
+// Enum validation
+categoryType: z.nativeEnum(CategoryTypeEnum)
+
+// Optional with default
+published: z.boolean().default(false)
+
+// Array validation
+tags: z.array(z.string()).default([])
+
+// Nested object
+translation: z.object({
+  id: z.string().optional(),
+  languageCode: z.string().min(2),
+  displayName: z.string().min(1),
+})
+```
+
+## Toast Notifications with Sonner
+
+The project uses sonner for toast notifications.
+
+### Basic Usage
+```typescript
+import { toast } from 'sonner';
+
+// Success
+toast.success('Operation completed successfully');
+
+// Error
+toast.error('Something went wrong');
+
+// Info
+toast.info('Here is some information');
+
+// Warning
+toast.warning('Please check your input');
+```
+
+### With Options
+```typescript
+toast.success('Saved!', {
+  duration: 5000,           // 5 seconds
+  description: 'Your changes have been saved',
+});
+
+toast.error('Failed to save', {
+  duration: Infinity,       // Won't auto-dismiss
+  action: {
+    label: 'Retry',
+    onClick: () => handleRetry(),
+  },
+});
+```
+
+### Promise Toast
+```typescript
+toast.promise(saveData(), {
+  loading: 'Saving...',
+  success: 'Data saved successfully',
+  error: 'Failed to save data',
+});
+```
+
+### Custom Toast
+```typescript
+toast.custom((t) => (
+  <div className="bg-base-100 p-4 rounded-lg shadow-lg">
+    <h3>Custom Toast</h3>
+    <button onClick={() => toast.dismiss(t)}>Close</button>
+  </div>
+));
+```
+
+## DaisyUI v5 CSS Variables
+
+DaisyUI v5 uses new CSS variable naming. Use these when writing custom CSS:
+
+### Color Variables
+```css
+/* Old DaisyUI v4 */
+oklch(var(--p))           /* Primary */
+oklch(var(--b1))          /* Base 100 */
+oklch(var(--bc))          /* Base content */
+
+/* New DaisyUI v5 */
+var(--color-primary)      /* Primary */
+var(--color-base-100)     /* Base 100 */
+var(--color-base-content) /* Base content */
+```
+
+### Available Color Variables
+```css
+/* Base colors */
+--color-base-100
+--color-base-200
+--color-base-300
+--color-base-content
+
+/* Semantic colors */
+--color-primary
+--color-primary-content
+--color-secondary
+--color-secondary-content
+--color-accent
+--color-accent-content
+--color-neutral
+--color-neutral-content
+
+/* State colors */
+--color-info
+--color-success
+--color-warning
+--color-error
+```
+
+### Using with Opacity (color-mix)
+```css
+/* 20% opacity primary color */
+background-color: color-mix(in oklch, var(--color-primary) 20%, transparent);
+
+/* 50% opacity base content */
+color: color-mix(in oklch, var(--color-base-content) 50%, transparent);
+```
+
+### Theme Configuration
+```css
+/* In App.css */
+@plugin 'daisyui' {
+  themes: emerald --default, dark;
+}
+```
+
+```typescript
+/* In rsbuild.config.ts */
+html: {
+  htmlAttrs: {
+    'data-theme': 'emerald',
+  },
+},
+```
