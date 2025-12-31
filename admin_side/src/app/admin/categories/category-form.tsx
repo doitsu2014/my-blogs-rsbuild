@@ -13,7 +13,7 @@ import { CategoryTypeEnum, type CategoryModel } from '@/domains/category';
 import type { TagModel } from '@/domains/tag';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
-import { Plus, Save, ArrowLeft, Languages, X } from 'lucide-react';
+import { Plus, Save, ArrowLeft, Languages, X, FolderOpen, Tag, Globe } from 'lucide-react';
 
 const AVAILABLE_LANGUAGES = [{ code: 'vi', displayName: 'Vietnamese (vi)' }];
 
@@ -64,7 +64,7 @@ export default function CategoryForm({ id }: { id?: string }) {
             const res: { data: CategoryModel } = await response.json();
             reset({
               displayName: res.data.displayName,
-              categoryType:  res.data.categoryType,
+              categoryType: res.data.categoryType,
               tagNames: res.data.tags?.map((tag: TagModel) => tag.name),
               translations: res.data.translations?.map((ct) => ({
                 id: ct.id,
@@ -94,7 +94,7 @@ export default function CategoryForm({ id }: { id?: string }) {
         rowVersion: 0,
       });
     }
-  }, [id, reset, token]);
+  }, [id, reset, token, keycloak]);
 
   const onSubmit = async (data: CategoryFormData) => {
     try {
@@ -194,14 +194,23 @@ export default function CategoryForm({ id }: { id?: string }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full max-w-2xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full">
       {/* Basic Information Card */}
-      <div className="card bg-base-100 shadow-sm">
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-primary hover:shadow-xl transition-shadow duration-300">
         <div className="card-body">
-          <h2 className="card-title text-lg">Basic Information</h2>
-          <p className="text-sm text-base-content/60 mb-4">
-            Set the display name and type for this category
-          </p>
+          <div className="flex items-start gap-4">
+            <div className="bg-primary/10 p-3 rounded-xl">
+              <FolderOpen className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h2 className="card-title text-lg">Basic Information</h2>
+              <p className="text-sm text-base-content/60">
+                Set the display name and type for this category
+              </p>
+            </div>
+          </div>
+
+          <div className="divider my-2"></div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="form-control w-full">
@@ -211,7 +220,7 @@ export default function CategoryForm({ id }: { id?: string }) {
               <input
                 type="text"
                 {...register('displayName')}
-                className={`input input-bordered w-full ${errors.displayName ? 'input-error' : ''}`}
+                className={`input input-bordered w-full focus:input-primary ${errors.displayName ? 'input-error' : ''}`}
                 placeholder="e.g., Technology"
                 disabled={isLoading}
               />
@@ -228,7 +237,7 @@ export default function CategoryForm({ id }: { id?: string }) {
               </div>
               <select
                 {...register('categoryType')}
-                className={`select select-bordered w-full ${errors.categoryType ? 'select-error' : ''}`}
+                className={`select select-bordered w-full focus:select-primary ${errors.categoryType ? 'select-error' : ''}`}
                 disabled={isLoading}
               >
                 <option value={CategoryTypeEnum.Blog}>Blog</option>
@@ -241,12 +250,30 @@ export default function CategoryForm({ id }: { id?: string }) {
               )}
             </label>
           </div>
+        </div>
+      </div>
 
-          <label className="form-control w-full mt-2">
-            <div className="label">
-              <span className="label-text font-medium">Tags</span>
-              <span className="label-text-alt text-base-content/50">Optional</span>
+      {/* Tags Card */}
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-accent hover:shadow-xl transition-shadow duration-300">
+        <div className="card-body">
+          <div className="flex items-start gap-4">
+            <div className="bg-accent/10 p-3 rounded-xl">
+              <Tag className="w-6 h-6 text-accent" />
             </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <h2 className="card-title text-lg">Tags</h2>
+                <span className="badge badge-accent badge-outline">Optional</span>
+              </div>
+              <p className="text-sm text-base-content/60">
+                Add tags to help organize and filter categories
+              </p>
+            </div>
+          </div>
+
+          <div className="divider my-2"></div>
+
+          <label className="form-control w-full">
             <Controller
               name="tagNames"
               control={control}
@@ -259,69 +286,77 @@ export default function CategoryForm({ id }: { id?: string }) {
                   setChips={(chips: { label: string; color: string }[]) => {
                     field.onChange(chips.map((chip) => chip.label.toLowerCase()));
                   }}
-                  className="flex flex-wrap border border-base-300 rounded-lg p-3 min-h-[48px] bg-base-100"
+                  className="flex flex-wrap border-2 border-base-300 rounded-xl p-3 min-h-[52px] bg-base-100 focus-within:border-accent transition-colors"
                   loading={isLoading}
                   formControlName="tags"
                 />
               )}
             />
             <div className="label">
-              <span className="label-text-alt text-base-content/50">
-                Press Enter to add a tag
-              </span>
+              <span className="label-text-alt text-base-content/50">Press Enter to add a tag</span>
             </div>
           </label>
         </div>
       </div>
 
       {/* Translations Card */}
-      <div className="card bg-base-100 shadow-sm">
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-secondary hover:shadow-xl transition-shadow duration-300">
         <div className="card-body">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="card-title text-lg flex items-center gap-2">
-                <Languages className="w-5 h-5" />
-                Translations
-              </h2>
-              <p className="text-sm text-base-content/60">
-                Add translations for different languages
-              </p>
+          <div className="flex items-start gap-4">
+            <div className="bg-secondary/10 p-3 rounded-xl">
+              <Globe className="w-6 h-6 text-secondary" />
             </div>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline btn-primary gap-1"
-              onClick={addTranslationTab}
-              disabled={isAddTabDisabled() || isLoading}
-            >
-              <Plus className="w-4 h-4" />
-              Add Language
-            </button>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="card-title text-lg">Translations</h2>
+                  <p className="text-sm text-base-content/60">
+                    Add translations for different languages
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary btn-outline gap-1"
+                  onClick={addTranslationTab}
+                  disabled={isAddTabDisabled() || isLoading}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Language
+                </button>
+              </div>
+            </div>
           </div>
 
+          <div className="divider my-2"></div>
+
           {fields.length === 0 ? (
-            <div className="text-center py-8 border-2 border-dashed border-base-300 rounded-lg">
-              <Languages className="w-10 h-10 mx-auto text-base-content/30 mb-2" />
-              <p className="text-base-content/50 text-sm">No translations added yet</p>
+            <div className="text-center py-10 border-2 border-dashed border-base-300 rounded-xl bg-base-200/30">
+              <div className="bg-secondary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Languages className="w-8 h-8 text-secondary/50" />
+              </div>
+              <p className="text-base-content/50 text-sm mb-3">No translations added yet</p>
               <button
                 type="button"
-                className="btn btn-sm btn-ghost mt-2"
+                className="btn btn-sm btn-ghost text-secondary"
                 onClick={addTranslationTab}
                 disabled={isAddTabDisabled() || isLoading}
               >
+                <Plus className="w-4 h-4" />
                 Add first translation
               </button>
             </div>
           ) : (
             <>
               {/* Translation Tabs */}
-              <div className="tabs tabs-boxed bg-base-200 p-1 rounded-lg mb-4">
+              <div className="tabs tabs-boxed bg-base-200 p-1 rounded-xl mb-4">
                 {fields.map((field, index) => (
                   <button
                     key={field.id}
                     type="button"
-                    className={`tab gap-2 ${activeTab === index ? 'tab-active' : ''}`}
+                    className={`tab gap-2 transition-all ${activeTab === index ? 'tab-active bg-secondary text-secondary-content' : ''}`}
                     onClick={() => setActiveTab(index)}
                   >
+                    <Globe className="w-3 h-3" />
                     {translations[index]?.languageCode?.toUpperCase() || `New`}
                   </button>
                 ))}
@@ -331,15 +366,16 @@ export default function CategoryForm({ id }: { id?: string }) {
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className={`space-y-4 ${activeTab === index ? '' : 'hidden'}`}
+                  className={`space-y-4 p-4 bg-base-200/30 rounded-xl ${activeTab === index ? '' : 'hidden'}`}
                 >
-                  <div className="flex items-center justify-between pb-2 border-b border-base-200">
-                    <span className="text-sm font-medium text-base-content/70">
+                  <div className="flex items-center justify-between pb-2 border-b border-base-300">
+                    <span className="text-sm font-medium text-base-content/70 flex items-center gap-2">
+                      <Languages className="w-4 h-4" />
                       Translation #{index + 1}
                     </span>
                     <button
                       type="button"
-                      className="btn btn-sm btn-ghost text-error gap-1"
+                      className="btn btn-sm btn-ghost text-error hover:bg-error/10 gap-1"
                       onClick={() => removeTranslationTab(index)}
                       disabled={isLoading}
                     >
@@ -351,11 +387,11 @@ export default function CategoryForm({ id }: { id?: string }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label className="form-control w-full">
                       <div className="label">
-                        <span className="label-text">Language</span>
+                        <span className="label-text font-medium">Language</span>
                       </div>
                       <select
                         {...register(`translations.${index}.languageCode`)}
-                        className={`select select-bordered w-full ${
+                        className={`select select-bordered w-full focus:select-secondary ${
                           errors.translations?.[index]?.languageCode ? 'select-error' : ''
                         }`}
                         disabled={isLoading}
@@ -378,12 +414,12 @@ export default function CategoryForm({ id }: { id?: string }) {
 
                     <label className="form-control w-full">
                       <div className="label">
-                        <span className="label-text">Translated Name</span>
+                        <span className="label-text font-medium">Translated Name</span>
                       </div>
                       <input
                         type="text"
                         {...register(`translations.${index}.displayName`)}
-                        className={`input input-bordered w-full ${
+                        className={`input input-bordered w-full focus:input-secondary ${
                           errors.translations?.[index]?.displayName ? 'input-error' : ''
                         }`}
                         placeholder="Enter translated name"
@@ -406,17 +442,21 @@ export default function CategoryForm({ id }: { id?: string }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
         <button
           type="button"
-          className="btn btn-ghost gap-2"
+          className="btn btn-ghost gap-2 hover:bg-base-200"
           onClick={() => navigate('/admin/categories')}
           disabled={isLoading}
         >
           <ArrowLeft className="w-4 h-4" />
           Cancel
         </button>
-        <button type="submit" className="btn btn-primary flex-1 gap-2" disabled={isLoading}>
+        <button
+          type="submit"
+          className="btn btn-primary flex-1 gap-2 shadow-lg hover:shadow-primary/25"
+          disabled={isLoading}
+        >
           {isSubmitting ? (
             <>
               <span className="loading loading-spinner loading-sm"></span>

@@ -9,7 +9,7 @@ import type { CategoryModel } from '@/domains/category';
 import MultiChipInput, {
   getRandomColor,
 } from '../components/inputs/multi-chip-input';
-import { Info, ImagePlus, Tag, BookOpen, Save, FileText, ArrowLeft } from 'lucide-react';
+import { Info, ImagePlus, Tag, BookOpen, Save, FileText, ArrowLeft, Sparkles } from 'lucide-react';
 import { RichTextEditor } from '../components/inputs/rich-text-editor/rich-text-editor';
 import ThumbnailsInput from '../components/inputs/thumbnail-input';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
@@ -163,17 +163,23 @@ export default function BlogForm({ id }: { id?: string }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full max-w-6xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full">
       {/* Basic Information */}
-      <div className="card bg-base-100 shadow-sm">
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-primary hover:shadow-xl transition-shadow duration-300">
         <div className="card-body">
-          <h2 className="card-title text-lg flex items-center gap-2">
-            <Info className="w-5 h-5" />
-            Basic Information
-          </h2>
-          <p className="text-sm text-base-content/60 mb-4">
-            Set the title, category, and publication status for your blog post
-          </p>
+          <div className="flex items-start gap-4">
+            <div className="bg-primary/10 p-3 rounded-xl">
+              <Info className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h2 className="card-title text-lg">Basic Information</h2>
+              <p className="text-sm text-base-content/60">
+                Set the title, category, and publication status for your blog post
+              </p>
+            </div>
+          </div>
+
+          <div className="divider my-2"></div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="form-control w-full md:col-span-2">
@@ -183,7 +189,7 @@ export default function BlogForm({ id }: { id?: string }) {
               <input
                 type="text"
                 {...register('title')}
-                className={`input input-bordered w-full ${errors.title ? 'input-error' : ''}`}
+                className={`input input-bordered w-full focus:input-primary ${errors.title ? 'input-error' : ''}`}
                 placeholder="Enter an engaging title"
                 disabled={isLoading}
               />
@@ -200,7 +206,7 @@ export default function BlogForm({ id }: { id?: string }) {
               </div>
               <select
                 {...register('categoryId')}
-                className={`select select-bordered w-full ${errors.categoryId ? 'select-error' : ''}`}
+                className={`select select-bordered w-full focus:select-primary ${errors.categoryId ? 'select-error' : ''}`}
                 disabled={isLoading || categories.length === 0}
               >
                 <option value="" disabled>
@@ -232,19 +238,24 @@ export default function BlogForm({ id }: { id?: string }) {
                 name="published"
                 control={control}
                 render={({ field }) => (
-                  <div className="flex items-center gap-3 border border-base-300 rounded-lg px-4 h-12 bg-base-100">
+                  <div
+                    className={`flex items-center gap-3 border-2 rounded-xl px-4 h-12 transition-all duration-200 ${
+                      field.value
+                        ? 'border-success bg-success/5'
+                        : 'border-base-300 bg-base-100'
+                    }`}
+                  >
                     <input
                       type="checkbox"
-                      className="toggle toggle-primary toggle-sm"
+                      className={`toggle ${field.value ? 'toggle-success' : ''}`}
                       checked={field.value}
                       onChange={field.onChange}
                       disabled={isLoading}
                     />
-                    <span
-                      className={`badge ${field.value ? 'badge-success' : 'badge-ghost'}`}
-                    >
+                    <span className={`font-medium ${field.value ? 'text-success' : 'text-base-content/60'}`}>
                       {field.value ? 'Published' : 'Draft'}
                     </span>
+                    {field.value && <Sparkles className="w-4 h-4 text-success ml-auto" />}
                   </div>
                 )}
               />
@@ -254,48 +265,55 @@ export default function BlogForm({ id }: { id?: string }) {
       </div>
 
       {/* Thumbnails */}
-      <div className="card bg-base-100 shadow-sm">
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-secondary hover:shadow-xl transition-shadow duration-300">
         <div className="card-body">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="card-title text-lg flex items-center gap-2">
-                <ImagePlus className="w-5 h-5" />
-                Thumbnails
-              </h2>
+          <div className="flex items-start gap-4">
+            <div className="bg-secondary/10 p-3 rounded-xl">
+              <ImagePlus className="w-6 h-6 text-secondary" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <h2 className="card-title text-lg">Thumbnails</h2>
+                <span className="badge badge-secondary badge-outline">Optional</span>
+              </div>
               <p className="text-sm text-base-content/60">Upload images for your blog post</p>
             </div>
-            <span className="badge badge-ghost">Optional</span>
           </div>
-          <div className="mt-4">
-            <Controller
-              name="thumbnailPaths"
-              control={control}
-              render={({ field }) => (
-                <ThumbnailsInput
-                  value={field.value}
-                  onUploadSuccess={(urls) => field.onChange([...urls])}
-                />
-              )}
-            />
-          </div>
+
+          <div className="divider my-2"></div>
+
+          <Controller
+            name="thumbnailPaths"
+            control={control}
+            render={({ field }) => (
+              <ThumbnailsInput
+                value={field.value}
+                onUploadSuccess={(urls) => field.onChange([...urls])}
+              />
+            )}
+          />
         </div>
       </div>
 
       {/* Tags */}
-      <div className="card bg-base-100 shadow-sm">
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-accent hover:shadow-xl transition-shadow duration-300">
         <div className="card-body">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="card-title text-lg flex items-center gap-2">
-                <Tag className="w-5 h-5" />
-                Tags
-              </h2>
+          <div className="flex items-start gap-4">
+            <div className="bg-accent/10 p-3 rounded-xl">
+              <Tag className="w-6 h-6 text-accent" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <h2 className="card-title text-lg">Tags</h2>
+                <span className="badge badge-accent badge-outline">Optional</span>
+              </div>
               <p className="text-sm text-base-content/60">Add tags to categorize your content</p>
             </div>
-            <span className="badge badge-ghost">Optional</span>
           </div>
 
-          <label className="form-control w-full mt-4">
+          <div className="divider my-2"></div>
+
+          <label className="form-control w-full">
             <Controller
               name="tagNames"
               control={control}
@@ -308,35 +326,43 @@ export default function BlogForm({ id }: { id?: string }) {
                   setChips={(chips: { label: string; color: string }[]) => {
                     field.onChange(chips.map((chip) => chip.label.toLowerCase()));
                   }}
-                  className="flex flex-wrap border border-base-300 rounded-lg p-3 min-h-[48px] bg-base-100"
+                  className="flex flex-wrap border-2 border-base-300 rounded-xl p-3 min-h-[52px] bg-base-100 focus-within:border-accent transition-colors"
                   loading={isLoading}
                   formControlName="tags"
                 />
               )}
             />
             <div className="label">
-              <span className="label-text-alt text-base-content/50">Press Enter to add a tag</span>
+              <span className="label-text-alt text-base-content/50">
+                Press Enter to add a tag
+              </span>
             </div>
           </label>
         </div>
       </div>
 
       {/* Preview Content */}
-      <div className="card bg-base-100 shadow-sm">
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-info hover:shadow-xl transition-shadow duration-300">
         <div className="card-body">
-          <h2 className="card-title text-lg flex items-center gap-2">
-            <BookOpen className="w-5 h-5" />
-            Preview Content
-          </h2>
-          <p className="text-sm text-base-content/60 mb-4">
-            Write a short summary that will appear in blog listings
-          </p>
+          <div className="flex items-start gap-4">
+            <div className="bg-info/10 p-3 rounded-xl">
+              <BookOpen className="w-6 h-6 text-info" />
+            </div>
+            <div className="flex-1">
+              <h2 className="card-title text-lg">Preview Content</h2>
+              <p className="text-sm text-base-content/60">
+                Write a short summary that will appear in blog listings
+              </p>
+            </div>
+          </div>
+
+          <div className="divider my-2"></div>
 
           <label className="form-control w-full">
             <textarea
               {...register('previewContent')}
-              className={`textarea textarea-bordered w-full min-h-24 ${errors.previewContent ? 'textarea-error' : ''}`}
-              placeholder="Enter a brief preview of your blog post"
+              className={`textarea textarea-bordered w-full min-h-28 focus:textarea-info ${errors.previewContent ? 'textarea-error' : ''}`}
+              placeholder="Enter a brief preview of your blog post..."
               disabled={isLoading}
             />
             {errors.previewContent && (
@@ -349,16 +375,22 @@ export default function BlogForm({ id }: { id?: string }) {
       </div>
 
       {/* Full Article Content */}
-      <div className="card bg-base-100 shadow-sm">
+      <div className="card bg-base-100 shadow-lg border-t-4 border-t-warning hover:shadow-xl transition-shadow duration-300">
         <div className="card-body">
-          <h2 className="card-title text-lg flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Full Article Content
-          </h2>
-          <p className="text-sm text-base-content/60 mb-4">Write your full article content</p>
+          <div className="flex items-start gap-4">
+            <div className="bg-warning/10 p-3 rounded-xl">
+              <FileText className="w-6 h-6 text-warning" />
+            </div>
+            <div className="flex-1">
+              <h2 className="card-title text-lg">Full Article Content</h2>
+              <p className="text-sm text-base-content/60">Write your full article content</p>
+            </div>
+          </div>
+
+          <div className="divider my-2"></div>
 
           <div
-            className="form-control w-full bg-base-100 rounded-lg border border-base-300"
+            className="form-control w-full bg-base-100 rounded-xl border-2 border-base-300 overflow-hidden"
             key="main-editor"
           >
             <Controller
@@ -387,17 +419,21 @@ export default function BlogForm({ id }: { id?: string }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
         <button
           type="button"
-          className="btn btn-ghost gap-2"
+          className="btn btn-ghost gap-2 hover:bg-base-200"
           onClick={() => navigate('/admin/blogs')}
           disabled={isLoading}
         >
           <ArrowLeft className="w-4 h-4" />
           Cancel
         </button>
-        <button type="submit" className="btn btn-primary flex-1 gap-2" disabled={isLoading}>
+        <button
+          type="submit"
+          className="btn btn-primary flex-1 gap-2 shadow-lg hover:shadow-primary/25"
+          disabled={isLoading}
+        >
           {isSubmitting ? (
             <>
               <span className="loading loading-spinner loading-sm"></span>
