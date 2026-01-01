@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
   ChevronDown,
@@ -10,6 +10,7 @@ import {
   Search,
   X,
   FileText,
+  Copy,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { PostModel } from '@/domains/post';
@@ -119,6 +120,37 @@ export default function AdminBlogsPage() {
   };
 
   const hasActiveFilters = textFilter || statusFilter || categoryFilter;
+
+  // Copy slug to clipboard
+  const copySlug = useCallback((slug: string) => {
+    navigator.clipboard.writeText(slug).then(() => {
+      toast.success('Slug copied to clipboard');
+    }).catch(() => {
+      toast.error('Failed to copy slug');
+    });
+  }, []);
+
+  // Create a map of categoryId -> categoryDisplayName for quick lookup
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, string>();
+    categories.forEach((cat) => {
+      map.set(cat.id, cat.displayName);
+    });
+    return map;
+  }, [categories]);
+
+  // Helper function to get category display name
+  const getCategoryDisplayName = (blog: PostModel): string => {
+    // First try to use categoryDisplayName from the post
+    if (blog.categoryDisplayName) {
+      return blog.categoryDisplayName;
+    }
+    // Fall back to looking up from categories map
+    if (blog.categoryId && categoryMap.has(blog.categoryId)) {
+      return categoryMap.get(blog.categoryId) || 'Uncategorized';
+    }
+    return 'Uncategorized';
+  };
 
   // Filtering and sorting with useMemo for performance
   const filteredAndSortedBlogs = useMemo(() => {
@@ -372,10 +404,19 @@ export default function AdminBlogsPage() {
                       </div>
                     </td>
                     <td>
-                      <code className="text-xs bg-base-200 px-2 py-1 rounded">{blog.slug}</code>
+                      <div className="tooltip tooltip-top before:max-w-xs before:whitespace-normal" data-tip={blog.slug}>
+                        <button
+                          type="button"
+                          onClick={() => copySlug(blog.slug)}
+                          className="flex items-center gap-1 text-xs bg-base-200 px-2 py-1 rounded hover:bg-base-300 transition-colors cursor-pointer max-w-[120px] group"
+                        >
+                          <code className="truncate">{blog.slug}</code>
+                          <Copy className="w-3 h-3 opacity-0 group-hover:opacity-60 flex-shrink-0" />
+                        </button>
+                      </div>
                     </td>
                     <td className="text-base-content/70 text-sm">
-                      {blog.categoryDisplayName || 'Uncategorized'}
+                      {getCategoryDisplayName(blog)}
                     </td>
                     <td>
                       <span

@@ -188,7 +188,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
         }
         return false;
       },
-      handleDrop: (view, event, slice, moved) => {
+      handleDrop: (view, event, _slice, moved) => {
         if (moved) return false;
 
         const files = event.dataTransfer?.files;
