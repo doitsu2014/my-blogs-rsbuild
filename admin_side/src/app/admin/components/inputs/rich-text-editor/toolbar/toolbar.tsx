@@ -1,6 +1,8 @@
 import React, { useCallback, useState, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
+import TurndownService from 'turndown';
+import { marked } from 'marked';
 import { getMediaUploadApiUrl, createAuthHeaders } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
 import {
@@ -48,7 +50,35 @@ import {
   Minus,
   CornerDownLeft,
   Upload,
+  FileDown,
+  FileUp,
 } from 'lucide-react';
+
+// Initialize Turndown service for HTML to Markdown conversion
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced',
+  emDelimiter: '*',
+});
+
+// Add custom rule for code blocks with language
+turndownService.addRule('codeBlock', {
+  filter: (node) => {
+    return node.nodeName === 'PRE' && !!(node as HTMLElement).querySelector('code');
+  },
+  replacement: (content, node) => {
+    const codeElement = (node as HTMLElement).querySelector('code');
+    const language = codeElement?.className?.match(/language-(\w+)/)?.[1] || '';
+    const code = codeElement?.textContent || content;
+    return `\n\`\`\`${language}\n${code}\n\`\`\`\n`;
+  },
+});
+
+// Configure marked for Markdown to HTML conversion
+marked.setOptions({
+  gfm: true,
+  breaks: false,
+});
 
 interface ToolbarProps {
   editor: Editor;
@@ -109,6 +139,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showMarkdownModal, setShowMarkdownModal] = useState(false);
+  const [markdownInput, setMarkdownInput] = useState('');
 
   // Link handlers
   const setLink = useCallback(() => {
@@ -189,6 +221,31 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   // Color picker state
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+
+  // Import markdown handler
+  const importMarkdown = useCallback(async () => {
+    if (!markdownInput.trim()) {
+      toast.error('Please enter some Markdown content');
+      return;
+    }
+    try {
+      let html = await marked(markdownInput);
+
+      // Clean up extra whitespace in code blocks
+      html = html.replace(/<pre><code([^>]*)>\n+/g, '<pre><code$1>');
+      html = html.replace(/\n+<\/code><\/pre>/g, '</code></pre>');
+      // Remove multiple consecutive empty paragraphs
+      html = html.replace(/(<p>\s*<\/p>\s*)+/g, '');
+
+      editor.commands.setContent(html);
+      setShowMarkdownModal(false);
+      setMarkdownInput('');
+      toast.success('Markdown imported successfully');
+    } catch (error) {
+      console.error('Error converting Markdown:', error);
+      toast.error('Failed to import Markdown');
+    }
+  }, [editor, markdownInput]);
 
   const colors = [
     '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
@@ -793,6 +850,80 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <RemoveFormatting size={16} />
       </ToolbarButton>
 
+      <ToolbarDivider />
+
+      {/* Markdown Actions */}
+      <ToolbarButton
+        onClick={() => {
+          const html = editor.getHTML();
+          const markdown = turndownService.turndown(html);
+          navigator.clipboard.writeText(markdown).then(() => {
+            toast.success('Copied as Markdown');
+          }).catch(() => {
+            toast.error('Failed to copy');
+          });
+        }}
+        title="Copy as Markdown"
+      >
+        <FileDown size={16} />
+      </ToolbarButton>
+
+      <ToolbarButton
+        onClick={() => setShowMarkdownModal(true)}
+        title="Import Markdown"
+      >
+        <FileUp size={16} />
+      </ToolbarButton>
+
+      {/* Markdown Import Modal */}
+      {showMarkdownModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setShowMarkdownModal(false)} />
+          <div className="relative bg-base-100 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-base-300">
+              <h3 className="font-bold text-lg">Import Markdown</h3>
+              <button
+                type="button"
+                className="btn btn-sm btn-circle btn-ghost"
+                onClick={() => setShowMarkdownModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 flex-1 overflow-auto">
+              <textarea
+                className="textarea textarea-bordered w-full h-64 font-mono text-sm"
+                placeholder="Paste your Markdown content here..."
+                value={markdownInput}
+                onChange={(e) => setMarkdownInput(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2 p-4 border-t border-base-300">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setShowMarkdownModal(false);
+                  setMarkdownInput('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={importMarkdown}
+              >
+                Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ToolbarDivider />
+
+      {/* Utilities */}
       <ToolbarButton onClick={onOpenHtmlEditor} title="Edit HTML">
         <FileCode size={16} />
       </ToolbarButton>
