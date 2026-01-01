@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Underline } from '@tiptap/extension-underline';
@@ -21,9 +21,13 @@ import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { all, createLowlight } from 'lowlight';
 import ImageResize from 'tiptap-extension-resize-image';
+import { toast } from 'sonner';
+import { getMediaUploadApiUrl, createAuthHeaders } from '@/config/api.config';
+import { useAuth } from '@/auth/AuthContext';
 
 import { Toolbar } from './toolbar/toolbar';
 import './tiptap-editor.css';
+import 'highlight.js/styles/github-dark.css';
 
 // Create lowlight instance with all languages
 const lowlight = createLowlight(all);
@@ -47,6 +51,40 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
   className,
   placeholder = 'Start writing...',
 }) => {
+  const { token } = useAuth();
+  const [isUploadingPaste, setIsUploadingPaste] = useState(false);
+  const tokenRef = useRef(token);
+
+  // Keep token ref up to date
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
+
+  // Upload image function using ref to avoid stale closure
+  const uploadImage = useCallback(async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(getMediaUploadApiUrl(), {
+        method: 'POST',
+        headers: createAuthHeaders(tokenRef.current),
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Image upload failed');
+      }
+
+      const data = await response.json();
+      return data.data.imgproxy_url;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Image upload failed');
+      return null;
+    }
+  }, []);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -118,6 +156,67 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
     editorProps: {
       attributes: {
         class: 'tiptap-editor-content focus:outline-none',
+      },
+      handlePaste: (view, event) => {
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+
+        for (const item of Array.from(items)) {
+          if (item.type.startsWith('image/')) {
+            event.preventDefault();
+            const file = item.getAsFile();
+            if (file) {
+              setIsUploadingPaste(true);
+              toast.loading('Uploading image...', { id: 'paste-upload' });
+
+              uploadImage(file).then((url) => {
+                setIsUploadingPaste(false);
+                toast.dismiss('paste-upload');
+
+                if (url) {
+                  view.dispatch(
+                    view.state.tr.replaceSelectionWith(
+                      view.state.schema.nodes.image.create({ src: url })
+                    )
+                  );
+                  toast.success('Image uploaded successfully');
+                }
+              });
+            }
+            return true;
+          }
+        }
+        return false;
+      },
+      handleDrop: (view, event, slice, moved) => {
+        if (moved) return false;
+
+        const files = event.dataTransfer?.files;
+        if (!files || files.length === 0) return false;
+
+        for (const file of Array.from(files)) {
+          if (file.type.startsWith('image/')) {
+            event.preventDefault();
+            setIsUploadingPaste(true);
+            toast.loading('Uploading image...', { id: 'drop-upload' });
+
+            const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+
+            uploadImage(file).then((url) => {
+              setIsUploadingPaste(false);
+              toast.dismiss('drop-upload');
+
+              if (url && coordinates) {
+                const node = view.state.schema.nodes.image.create({ src: url });
+                const transaction = view.state.tr.insert(coordinates.pos, node);
+                view.dispatch(transaction);
+                toast.success('Image uploaded successfully');
+              }
+            });
+            return true;
+          }
+        }
+        return false;
       },
     },
   });

@@ -164,21 +164,26 @@
   color: color-mix(in oklch, var(--color-base-content) 80%, transparent);
 }
 
-/* Code Block */
+/* Code Block - works with highlight.js themes */
 .tiptap pre {
-  background-color: var(--color-neutral);
-  color: var(--color-neutral-content);
+  background-color: #0d1117;
+  color: #c9d1d9;
   border-radius: 0.5rem;
-  padding: 1rem;
   margin: 1rem 0;
+  padding: 1rem;
   overflow-x: auto;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 0.875rem;
   line-height: 1.5;
 }
 
+.tiptap pre code.hljs {
+  background: transparent;
+  padding: 0;
+}
+
 .tiptap pre code {
-  background: none;
+  background: transparent;
   color: inherit;
   font-size: inherit;
   padding: 0;
@@ -191,62 +196,6 @@
   padding: 0.125rem 0.25rem;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 0.875em;
-}
-
-/* Syntax Highlighting (highlight.js compatible classes via lowlight) */
-.tiptap pre .hljs-comment,
-.tiptap pre .hljs-quote {
-  color: #6a737d;
-}
-
-.tiptap pre .hljs-variable,
-.tiptap pre .hljs-template-variable,
-.tiptap pre .hljs-tag,
-.tiptap pre .hljs-name,
-.tiptap pre .hljs-selector-id,
-.tiptap pre .hljs-selector-class,
-.tiptap pre .hljs-regexp,
-.tiptap pre .hljs-deletion {
-  color: #e06c75;
-}
-
-.tiptap pre .hljs-number,
-.tiptap pre .hljs-built_in,
-.tiptap pre .hljs-literal,
-.tiptap pre .hljs-type,
-.tiptap pre .hljs-params,
-.tiptap pre .hljs-meta,
-.tiptap pre .hljs-link {
-  color: #d19a66;
-}
-
-.tiptap pre .hljs-attribute {
-  color: #e6c07b;
-}
-
-.tiptap pre .hljs-string,
-.tiptap pre .hljs-symbol,
-.tiptap pre .hljs-bullet,
-.tiptap pre .hljs-addition {
-  color: #98c379;
-}
-
-.tiptap pre .hljs-title,
-.tiptap pre .hljs-section {
-  color: #61afef;
-}
-
-.tiptap pre .hljs-keyword,
-.tiptap pre .hljs-selector-tag {
-  color: #c678dd;
-}
-
-.tiptap pre .hljs-emphasis {
-  font-style: italic;
-}
-
-.tiptap pre .hljs-strong {
-  font-weight: 700;
 }
 
 /* Tables */
@@ -580,20 +529,26 @@
 }
 
 .tiptap-preview pre {
-  background-color: var(--color-neutral);
-  color: var(--color-neutral-content);
+  background-color: #0d1117;
+  color: #c9d1d9;
   border-radius: 0.5rem;
-  padding: 1rem;
   margin: 1rem 0;
+  padding: 1rem;
   overflow-x: auto;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 0.875rem;
   line-height: 1.5;
 }
 
+.tiptap-preview pre code.hljs {
+  background: transparent;
+  padding: 0;
+}
+
 .tiptap-preview pre code {
-  background: none;
+  background: transparent;
   color: inherit;
+  font-size: inherit;
   padding: 0;
 }
 

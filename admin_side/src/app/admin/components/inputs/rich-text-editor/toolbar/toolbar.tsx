@@ -1,11 +1,15 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
+import { toast } from 'sonner';
+import { getMediaUploadApiUrl, createAuthHeaders } from '@/config/api.config';
+import { useAuth } from '@/auth/AuthContext';
 import {
   Bold,
   Italic,
   Underline,
   Strikethrough,
   Code,
+  Code2,
   Heading1,
   Heading2,
   Heading3,
@@ -43,6 +47,7 @@ import {
   Plus,
   Minus,
   CornerDownLeft,
+  Upload,
 } from 'lucide-react';
 
 interface ToolbarProps {
@@ -69,17 +74,18 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
   title,
   children,
 }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    title={title}
-    className={`btn btn-ghost btn-xs h-8 min-h-8 px-2 ${
-      isActive ? 'bg-primary/20 text-primary' : ''
-    }`}
-  >
-    {children}
-  </button>
+  <div className="tooltip tooltip-bottom" data-tip={title}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`btn btn-ghost btn-xs h-8 min-h-8 px-2 ${
+        isActive ? 'bg-primary/20 text-primary' : ''
+      }`}
+    >
+      {children}
+    </button>
+  </div>
 );
 
 const ToolbarDivider: React.FC = () => (
@@ -94,12 +100,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onTogglePreview,
   isPreview,
 }) => {
+  const { token } = useAuth();
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [showYoutubeInput, setShowYoutubeInput] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Link handlers
   const setLink = useCallback(() => {
@@ -128,6 +137,46 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     setShowImageInput(false);
   }, [editor, imageUrl]);
 
+  // Image upload handler
+  const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch(getMediaUploadApiUrl(), {
+          method: 'POST',
+          headers: createAuthHeaders(token),
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('Image upload failed');
+        }
+
+        const data = await response.json();
+        const uploadedUrl = data.data.imgproxy_url;
+
+        // Insert the uploaded image into the editor
+        editor.chain().focus().setImage({ src: uploadedUrl }).run();
+      }
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Image upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [editor, token]);
+
   // YouTube handler
   const addYoutube = useCallback(() => {
     if (youtubeUrl) {
@@ -150,7 +199,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <div className="tiptap-toolbar flex flex-wrap items-center gap-0.5 p-2 border-b border-base-300 bg-base-100 rounded-t-lg">
       {/* Headings Dropdown */}
-      <div className="dropdown">
+      <div className="dropdown tooltip tooltip-bottom" data-tip="Heading">
         <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8 gap-1">
           <span className="text-xs">Heading</span>
           <ChevronDown size={12} />
@@ -257,8 +306,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <ToolbarDivider />
 
       {/* Text Color */}
-      <div className="dropdown">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="Text Color">
+      <div className="dropdown tooltip tooltip-bottom" data-tip="Text Color">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8">
           <Palette size={16} />
         </div>
         <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow">
@@ -284,8 +333,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       </div>
 
       {/* Highlight */}
-      <div className="dropdown">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="Highlight">
+      <div className="dropdown tooltip tooltip-bottom" data-tip="Highlight">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8">
           <Highlighter size={16} />
         </div>
         <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow">
@@ -395,19 +444,155 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       >
         <Quote size={16} />
       </ToolbarButton>
+
+      {/* Inline Code */}
       <ToolbarButton
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        isActive={editor.isActive('codeBlock')}
-        title="Code Block"
+        onClick={() => editor.chain().focus().toggleCode().run()}
+        isActive={editor.isActive('code')}
+        title="Inline Code"
       >
         <Code size={16} />
       </ToolbarButton>
 
+      {/* Code Block with Language Selection */}
+      <div className="dropdown tooltip tooltip-bottom" data-tip="Code Block">
+        <div
+          tabIndex={0}
+          role="button"
+          className={`btn btn-ghost btn-xs h-8 min-h-8 gap-1 ${editor.isActive('codeBlock') ? 'bg-primary/20 text-primary' : ''}`}
+        >
+          <Code2 size={16} />
+          <ChevronDown size={12} />
+        </div>
+        <ul tabIndex={0} className="dropdown-content menu bg-base-200 rounded-box z-50 w-44 p-2 shadow max-h-64 overflow-y-auto">
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            >
+              Plain Text
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'javascript' }).run()}
+            >
+              JavaScript
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'typescript' }).run()}
+            >
+              TypeScript
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'rust' }).run()}
+            >
+              Rust
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'csharp' }).run()}
+            >
+              C#
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'html' }).run()}
+            >
+              HTML
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'css' }).run()}
+            >
+              CSS
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'python' }).run()}
+            >
+              Python
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'java' }).run()}
+            >
+              Java
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'go' }).run()}
+            >
+              Go
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'sql' }).run()}
+            >
+              SQL
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'bash' }).run()}
+            >
+              Bash
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'json' }).run()}
+            >
+              JSON
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'yaml' }).run()}
+            >
+              YAML
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setCodeBlock({ language: 'xml' }).run()}
+            >
+              XML
+            </button>
+          </li>
+        </ul>
+      </div>
+
       <ToolbarDivider />
 
       {/* Link */}
-      <div className="dropdown">
-        <div tabIndex={0} role="button" className={`btn btn-ghost btn-xs h-8 min-h-8 ${editor.isActive('link') ? 'bg-primary/20 text-primary' : ''}`} title="Link">
+      <div className="dropdown tooltip tooltip-bottom" data-tip="Link">
+        <div tabIndex={0} role="button" className={`btn btn-ghost btn-xs h-8 min-h-8 ${editor.isActive('link') ? 'bg-primary/20 text-primary' : ''}`}>
           <Link size={16} />
         </div>
         <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow w-72">
@@ -433,15 +618,36 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       )}
 
       {/* Image */}
-      <div className="dropdown">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="Image">
+      <div className="dropdown tooltip tooltip-bottom" data-tip="Image">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8">
           <Image size={16} />
         </div>
-        <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow w-72">
+        <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow w-80">
+          {/* File Upload */}
+          <div className="mb-3">
+            <label className="text-xs font-medium mb-1 block">Upload Image</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="file-input file-input-bordered file-input-sm w-full"
+              onChange={handleImageUpload}
+              disabled={isUploading}
+            />
+            {isUploading && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-info">
+                <span className="loading loading-spinner loading-xs"></span>
+                Uploading...
+              </div>
+            )}
+          </div>
+          {/* URL Input */}
+          <div className="divider text-xs my-2">OR</div>
+          <label className="text-xs font-medium mb-1 block">Image URL</label>
           <div className="flex gap-2">
             <input
               type="url"
-              placeholder="Image URL"
+              placeholder="https://example.com/image.jpg"
               className="input input-bordered input-sm flex-1"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
@@ -455,8 +661,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       </div>
 
       {/* YouTube */}
-      <div className="dropdown">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="YouTube Video">
+      <div className="dropdown tooltip tooltip-bottom" data-tip="YouTube Video">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8">
           <Youtube size={16} />
         </div>
         <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow w-72">
@@ -479,8 +685,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <ToolbarDivider />
 
       {/* Table */}
-      <div className="dropdown">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="Table">
+      <div className="dropdown tooltip tooltip-bottom" data-tip="Table">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8">
           <Table size={16} />
         </div>
         <ul tabIndex={0} className="dropdown-content menu bg-base-200 rounded-box z-50 w-52 p-2 shadow">

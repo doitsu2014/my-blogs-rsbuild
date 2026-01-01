@@ -24,7 +24,11 @@ export const getGraphQLApiUrl = (): string => {
  * Get the Media Upload API URL from environment variables
  */
 export const getMediaUploadApiUrl = (): string => {
-  return import.meta.env.PUBLIC_MEDIA_UPLOAD_API_URL || 'http://localhost:8989/api/media/upload';
+  const baseUrl = getRestApiBaseUrl();
+  if (import.meta.env.PUBLIC_MEDIA_UPLOAD_API_URL) {
+    return import.meta.env.PUBLIC_MEDIA_UPLOAD_API_URL;
+  }
+  return baseUrl ? `${baseUrl.replace(/\/$/, '')}/media/images` : '/media/images';
 };
 
 /**
