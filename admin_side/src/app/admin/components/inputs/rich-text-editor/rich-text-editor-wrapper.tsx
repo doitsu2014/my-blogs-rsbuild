@@ -1,14 +1,17 @@
 import React from 'react';
-import type { RichTextEditorProps } from './rich-text-editor';
+import type { TipTapEditorProps } from './tiptap-editor';
 
-// Lazy load the rich text editor component for better performance
-const RichTextEditor = React.lazy(() => import('./rich-text-editor'));
+// Lazy load the TipTap editor component for better performance
+const TipTapEditor = React.lazy(() => import('./tiptap-editor'));
+
+// Re-export types for backward compatibility
+export type RichTextEditorProps = TipTapEditorProps;
 
 /**
  * Wrapper component for the Rich Text Editor
  * Handles lazy loading with a suspense boundary
  */
-export const RichTextEditorWrapper: React.FC<RichTextEditorProps> = (props) => {
+export const RichTextEditorWrapper: React.FC<TipTapEditorProps> = (props) => {
   return (
     <React.Suspense
       fallback={
@@ -20,7 +23,7 @@ export const RichTextEditorWrapper: React.FC<RichTextEditorProps> = (props) => {
         </div>
       }
     >
-      <RichTextEditor {...props} />
+      <TipTapEditor {...props} />
     </React.Suspense>
   );
 };

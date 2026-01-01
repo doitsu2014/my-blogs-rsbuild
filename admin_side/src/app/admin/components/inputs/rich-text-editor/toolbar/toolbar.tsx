@@ -1,0 +1,609 @@
+import React, { useCallback, useState } from 'react';
+import type { Editor } from '@tiptap/react';
+import {
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Code,
+  Heading1,
+  Heading2,
+  Heading3,
+  Heading4,
+  Heading5,
+  Heading6,
+  List,
+  ListOrdered,
+  CheckSquare,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Quote,
+  Link,
+  Unlink,
+  Image,
+  Youtube,
+  Table,
+  TableProperties,
+  Rows3,
+  Columns3,
+  Trash2,
+  Subscript,
+  Superscript,
+  Maximize,
+  Minimize,
+  FileCode,
+  RemoveFormatting,
+  Eye,
+  EyeOff,
+  Palette,
+  Highlighter,
+  ChevronDown,
+  Plus,
+  Minus,
+  CornerDownLeft,
+} from 'lucide-react';
+
+interface ToolbarProps {
+  editor: Editor;
+  onToggleFullscreen: () => void;
+  isFullscreen: boolean;
+  onOpenHtmlEditor: () => void;
+  onTogglePreview: () => void;
+  isPreview: boolean;
+}
+
+interface ToolbarButtonProps {
+  onClick: () => void;
+  isActive?: boolean;
+  disabled?: boolean;
+  title: string;
+  children: React.ReactNode;
+}
+
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({
+  onClick,
+  isActive = false,
+  disabled = false,
+  title,
+  children,
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    title={title}
+    className={`btn btn-ghost btn-xs h-8 min-h-8 px-2 ${
+      isActive ? 'bg-primary/20 text-primary' : ''
+    }`}
+  >
+    {children}
+  </button>
+);
+
+const ToolbarDivider: React.FC = () => (
+  <div className="w-px h-6 bg-base-300 mx-1" />
+);
+
+export const Toolbar: React.FC<ToolbarProps> = ({
+  editor,
+  onToggleFullscreen,
+  isFullscreen,
+  onOpenHtmlEditor,
+  onTogglePreview,
+  isPreview,
+}) => {
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [showImageInput, setShowImageInput] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [showYoutubeInput, setShowYoutubeInput] = useState(false);
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+
+  // Link handlers
+  const setLink = useCallback(() => {
+    if (linkUrl) {
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange('link')
+        .setLink({ href: linkUrl })
+        .run();
+    }
+    setLinkUrl('');
+    setShowLinkInput(false);
+  }, [editor, linkUrl]);
+
+  const unsetLink = useCallback(() => {
+    editor.chain().focus().unsetLink().run();
+  }, [editor]);
+
+  // Image handler
+  const addImage = useCallback(() => {
+    if (imageUrl) {
+      editor.chain().focus().setImage({ src: imageUrl }).run();
+    }
+    setImageUrl('');
+    setShowImageInput(false);
+  }, [editor, imageUrl]);
+
+  // YouTube handler
+  const addYoutube = useCallback(() => {
+    if (youtubeUrl) {
+      editor.chain().focus().setYoutubeVideo({ src: youtubeUrl }).run();
+    }
+    setYoutubeUrl('');
+    setShowYoutubeInput(false);
+  }, [editor, youtubeUrl]);
+
+  // Color picker state
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+
+  const colors = [
+    '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
+    '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
+    '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
+  ];
+
+  return (
+    <div className="tiptap-toolbar flex flex-wrap items-center gap-0.5 p-2 border-b border-base-300 bg-base-100 rounded-t-lg">
+      {/* Headings Dropdown */}
+      <div className="dropdown">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8 gap-1">
+          <span className="text-xs">Heading</span>
+          <ChevronDown size={12} />
+        </div>
+        <ul tabIndex={0} className="dropdown-content menu bg-base-200 rounded-box z-50 w-40 p-2 shadow">
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().setParagraph().run()}
+              className={editor.isActive('paragraph') ? 'active' : ''}
+            >
+              Normal
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              className={editor.isActive('heading', { level: 1 }) ? 'active' : ''}
+            >
+              <Heading1 size={16} /> Heading 1
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={editor.isActive('heading', { level: 2 }) ? 'active' : ''}
+            >
+              <Heading2 size={16} /> Heading 2
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              className={editor.isActive('heading', { level: 3 }) ? 'active' : ''}
+            >
+              <Heading3 size={16} /> Heading 3
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
+              className={editor.isActive('heading', { level: 4 }) ? 'active' : ''}
+            >
+              <Heading4 size={16} /> Heading 4
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}
+              className={editor.isActive('heading', { level: 5 }) ? 'active' : ''}
+            >
+              <Heading5 size={16} /> Heading 5
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 6 }).run()}
+              className={editor.isActive('heading', { level: 6 }) ? 'active' : ''}
+            >
+              <Heading6 size={16} /> Heading 6
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <ToolbarDivider />
+
+      {/* Text Formatting */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        isActive={editor.isActive('bold')}
+        title="Bold"
+      >
+        <Bold size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        isActive={editor.isActive('italic')}
+        title="Italic"
+      >
+        <Italic size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        isActive={editor.isActive('underline')}
+        title="Underline"
+      >
+        <Underline size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        isActive={editor.isActive('strike')}
+        title="Strikethrough"
+      >
+        <Strikethrough size={16} />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Text Color */}
+      <div className="dropdown">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="Text Color">
+          <Palette size={16} />
+        </div>
+        <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow">
+          <div className="grid grid-cols-10 gap-1">
+            {colors.map((color) => (
+              <button
+                key={color}
+                type="button"
+                className="w-5 h-5 rounded border border-base-300 hover:scale-110 transition-transform"
+                style={{ backgroundColor: color }}
+                onClick={() => editor.chain().focus().setColor(color).run()}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs mt-2 w-full"
+            onClick={() => editor.chain().focus().unsetColor().run()}
+          >
+            Remove color
+          </button>
+        </div>
+      </div>
+
+      {/* Highlight */}
+      <div className="dropdown">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="Highlight">
+          <Highlighter size={16} />
+        </div>
+        <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow">
+          <div className="grid grid-cols-10 gap-1">
+            {colors.map((color) => (
+              <button
+                key={color}
+                type="button"
+                className="w-5 h-5 rounded border border-base-300 hover:scale-110 transition-transform"
+                style={{ backgroundColor: color }}
+                onClick={() => editor.chain().focus().toggleHighlight({ color }).run()}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs mt-2 w-full"
+            onClick={() => editor.chain().focus().unsetHighlight().run()}
+          >
+            Remove highlight
+          </button>
+        </div>
+      </div>
+
+      <ToolbarDivider />
+
+      {/* Subscript/Superscript */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleSubscript().run()}
+        isActive={editor.isActive('subscript')}
+        title="Subscript"
+      >
+        <Subscript size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleSuperscript().run()}
+        isActive={editor.isActive('superscript')}
+        title="Superscript"
+      >
+        <Superscript size={16} />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Lists */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        isActive={editor.isActive('bulletList')}
+        title="Bullet List"
+      >
+        <List size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        isActive={editor.isActive('orderedList')}
+        title="Numbered List"
+      >
+        <ListOrdered size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleTaskList().run()}
+        isActive={editor.isActive('taskList')}
+        title="Task List"
+      >
+        <CheckSquare size={16} />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Alignment */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        isActive={editor.isActive({ textAlign: 'left' })}
+        title="Align Left"
+      >
+        <AlignLeft size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        isActive={editor.isActive({ textAlign: 'center' })}
+        title="Align Center"
+      >
+        <AlignCenter size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        isActive={editor.isActive({ textAlign: 'right' })}
+        title="Align Right"
+      >
+        <AlignRight size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+        isActive={editor.isActive({ textAlign: 'justify' })}
+        title="Justify"
+      >
+        <AlignJustify size={16} />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Block Elements */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        isActive={editor.isActive('blockquote')}
+        title="Blockquote"
+      >
+        <Quote size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        isActive={editor.isActive('codeBlock')}
+        title="Code Block"
+      >
+        <Code size={16} />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Link */}
+      <div className="dropdown">
+        <div tabIndex={0} role="button" className={`btn btn-ghost btn-xs h-8 min-h-8 ${editor.isActive('link') ? 'bg-primary/20 text-primary' : ''}`} title="Link">
+          <Link size={16} />
+        </div>
+        <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow w-72">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              placeholder="https://example.com"
+              className="input input-bordered input-sm flex-1"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && setLink()}
+            />
+            <button type="button" className="btn btn-primary btn-sm" onClick={setLink}>
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+      {editor.isActive('link') && (
+        <ToolbarButton onClick={unsetLink} title="Remove Link">
+          <Unlink size={16} />
+        </ToolbarButton>
+      )}
+
+      {/* Image */}
+      <div className="dropdown">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="Image">
+          <Image size={16} />
+        </div>
+        <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow w-72">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              placeholder="Image URL"
+              className="input input-bordered input-sm flex-1"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addImage()}
+            />
+            <button type="button" className="btn btn-primary btn-sm" onClick={addImage}>
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* YouTube */}
+      <div className="dropdown">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="YouTube Video">
+          <Youtube size={16} />
+        </div>
+        <div tabIndex={0} className="dropdown-content bg-base-200 rounded-box z-50 p-3 shadow w-72">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              placeholder="YouTube URL"
+              className="input input-bordered input-sm flex-1"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addYoutube()}
+            />
+            <button type="button" className="btn btn-primary btn-sm" onClick={addYoutube}>
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ToolbarDivider />
+
+      {/* Table */}
+      <div className="dropdown">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-xs h-8 min-h-8" title="Table">
+          <Table size={16} />
+        </div>
+        <ul tabIndex={0} className="dropdown-content menu bg-base-200 rounded-box z-50 w-52 p-2 shadow">
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+            >
+              <Plus size={14} /> Insert Table (3x3)
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addColumnBefore().run()}
+              disabled={!editor.can().addColumnBefore()}
+            >
+              <Columns3 size={14} /> Add Column Before
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              disabled={!editor.can().addColumnAfter()}
+            >
+              <Columns3 size={14} /> Add Column After
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              disabled={!editor.can().deleteColumn()}
+            >
+              <Minus size={14} /> Delete Column
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addRowBefore().run()}
+              disabled={!editor.can().addRowBefore()}
+            >
+              <Rows3 size={14} /> Add Row Before
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              disabled={!editor.can().addRowAfter()}
+            >
+              <Rows3 size={14} /> Add Row After
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              disabled={!editor.can().deleteRow()}
+            >
+              <Minus size={14} /> Delete Row
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().mergeCells().run()}
+              disabled={!editor.can().mergeCells()}
+            >
+              <TableProperties size={14} /> Merge Cells
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().splitCell().run()}
+              disabled={!editor.can().splitCell()}
+            >
+              <TableProperties size={14} /> Split Cell
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              disabled={!editor.can().deleteTable()}
+              className="text-error"
+            >
+              <Trash2 size={14} /> Delete Table
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <ToolbarDivider />
+
+      {/* Utilities */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+        title="Clear Formatting"
+      >
+        <RemoveFormatting size={16} />
+      </ToolbarButton>
+
+      <ToolbarButton onClick={onOpenHtmlEditor} title="Edit HTML">
+        <FileCode size={16} />
+      </ToolbarButton>
+
+      <ToolbarButton
+        onClick={onTogglePreview}
+        title={isPreview ? 'Edit Mode' : 'Preview'}
+        isActive={isPreview}
+      >
+        {isPreview ? <EyeOff size={16} /> : <Eye size={16} />}
+      </ToolbarButton>
+
+      <ToolbarButton onClick={onToggleFullscreen} title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
+        {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+      </ToolbarButton>
+    </div>
+  );
+};
+
+export default Toolbar;
