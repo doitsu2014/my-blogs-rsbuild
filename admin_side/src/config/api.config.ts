@@ -120,6 +120,17 @@ export const authenticatedFetch = async (
 };
 
 /**
+ * Get the Media Image URL from a path
+ * @param path - The image path returned from upload API
+ * @returns Full URL to access the image via imgproxy
+ */
+export const getMediaImageUrl = (path: string): string => {
+  const baseUrl = getRestApiBaseUrl();
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return baseUrl ? `${baseUrl.replace(/\/$/, '')}/media/images/${cleanPath}` : `/media/images/${cleanPath}`;
+};
+
+/**
  * API Configuration object for easy access
  */
 export const API_CONFIG = {
