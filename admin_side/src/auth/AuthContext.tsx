@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import keycloak from './keycloak';
 import type Keycloak from 'keycloak-js';
+import { config } from '../config/runtime-config';
 
 interface AuthContextType {
   keycloak: Keycloak | null;
@@ -45,7 +46,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     // Initialize Keycloak with PKCE and custom scope
     // IMPORTANT: Include 'offline_access' to get refresh tokens
-    const baseScope = import.meta.env.PUBLIC_KEYCLOAK_SCOPE || 'my-headless-cms-api-all email openid profile';
+    const baseScope = config().keycloakScope || 'my-headless-cms-api-all email openid profile';
     const scope = baseScope.includes('offline_access') ? baseScope : `${baseScope} offline_access`;
 
     keycloak
@@ -155,7 +156,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = () => {
     // Ensure we request offline_access scope for refresh tokens
-    const baseScope = import.meta.env.PUBLIC_KEYCLOAK_SCOPE || 'my-headless-cms-api-all email openid profile';
+    const baseScope = config().keycloakScope || 'my-headless-cms-api-all email openid profile';
     const scope = baseScope.includes('offline_access') ? baseScope : `${baseScope} offline_access`;
 
     keycloak.login({

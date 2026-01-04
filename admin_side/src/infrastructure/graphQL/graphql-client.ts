@@ -1,10 +1,11 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { getAuthHeaders } from '../utilities.auth';
+import { config } from '../../config/runtime-config';
 
 // HTTP link to my-cms GraphQL API
 const httpLink = createHttpLink({
-  uri: import.meta.env.PUBLIC_GRAPHQL_API_URL || 'http://localhost:4000/graphql',
+  uri: config().graphqlApiUrl || 'http://localhost:4000/graphql',
 });
 
 // Auth link to add Keycloak Bearer token to requests
@@ -43,8 +44,7 @@ export const buildGraphQLClient = () =>
 export const buildCacheGraphQLClient = () =>
   new ApolloClient({
     link: authLink.concat(createHttpLink({
-      uri: import.meta.env.PUBLIC_GRAPHQL_CACHE_API_URL || import.meta.env.PUBLIC_GRAPHQL_API_URL || 'http://localhost:4000/graphql',
+      uri: config().graphqlCacheApiUrl || config().graphqlApiUrl || 'http://localhost:4000/graphql',
     })),
     cache: new InMemoryCache(),
   });
-

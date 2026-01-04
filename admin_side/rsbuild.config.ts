@@ -9,6 +9,15 @@ export default defineConfig({
     htmlAttrs: {
       'data-theme': 'emerald',
     },
+    // Inject runtime config script before app scripts
+    tags: [
+      {
+        tag: 'script',
+        attrs: { src: '/config.js' },
+        head: true,
+        append: false, // Prepend to ensure config loads first
+      },
+    ],
   },
   server: {
     port: 3002,

@@ -1,10 +1,11 @@
 import Keycloak from 'keycloak-js';
+import { config } from '../config/runtime-config';
 
-// Keycloak configuration from environment variables
+// Keycloak configuration from runtime config
 const keycloakConfig = {
-  url: import.meta.env.PUBLIC_KEYCLOAK_URL || 'https://my-ids-admin.ducth.dev',
-  realm: import.meta.env.PUBLIC_KEYCLOAK_REALM || 'master',
-  clientId: import.meta.env.PUBLIC_KEYCLOAK_CLIENT_ID || 'admin-side-client',
+  url: config().keycloakUrl,
+  realm: config().keycloakRealm,
+  clientId: config().keycloakClientId,
 };
 
 // Create Keycloak instance

@@ -1,32 +1,34 @@
 /**
  * API Configuration
  *
- * This file centralizes all API endpoint configurations using environment variables.
+ * This file centralizes all API endpoint configurations using runtime config.
  * All API calls should use these helper functions instead of hardcoded URLs.
  */
 
+import { config } from './runtime-config';
+
 /**
- * Get the REST API base URL from environment variables
+ * Get the REST API base URL from runtime config
  * Falls back to relative path if not configured
  */
 export const getRestApiBaseUrl = (): string => {
-  return import.meta.env.PUBLIC_REST_API_URL || '';
+  return config().restApiUrl || '';
 };
 
 /**
- * Get the GraphQL API URL from environment variables
+ * Get the GraphQL API URL from runtime config
  */
 export const getGraphQLApiUrl = (): string => {
-  return import.meta.env.PUBLIC_GRAPHQL_API_URL || 'http://localhost:8989/graphql';
+  return config().graphqlApiUrl || 'http://localhost:8989/graphql';
 };
 
 /**
- * Get the Media Upload API URL from environment variables
+ * Get the Media Upload API URL from runtime config
  */
 export const getMediaUploadApiUrl = (): string => {
   const baseUrl = getRestApiBaseUrl();
-  if (import.meta.env.PUBLIC_MEDIA_UPLOAD_API_URL) {
-    return import.meta.env.PUBLIC_MEDIA_UPLOAD_API_URL;
+  if (config().mediaUploadApiUrl) {
+    return config().mediaUploadApiUrl!;
   }
   return baseUrl ? `${baseUrl.replace(/\/$/, '')}/media/images` : '/media/images';
 };
