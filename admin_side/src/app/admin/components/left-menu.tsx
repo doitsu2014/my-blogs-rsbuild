@@ -42,6 +42,9 @@ export default function LeftMenu() {
               <li>
                 <MenuItem displayName="Blogs" slug="/admin/blogs" />
               </li>
+              <li>
+                <MenuItem displayName="Media" slug="/admin/media" />
+              </li>
             </ul>
           </details>
         </li>

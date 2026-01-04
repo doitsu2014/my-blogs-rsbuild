@@ -11,6 +11,7 @@ import AdminEditCategoryPage from './app/admin/categories/edit/page';
 import AdminBlogsPage from './app/admin/blogs/page';
 import AdminCreateBlogPage from './app/admin/blogs/create/page';
 import AdminEditBlogPage from './app/admin/blogs/edit/page';
+import AdminMediaPage from './app/admin/media/page';
 
 const App = () => {
   return (
@@ -26,6 +27,7 @@ const App = () => {
           <Route path="/admin/blogs" element={<ProtectedRoute><AdminLayout><AdminBlogsPage /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/blogs/create" element={<ProtectedRoute><AdminLayout><AdminCreateBlogPage /></AdminLayout></ProtectedRoute>} />
           <Route path="/admin/blogs/edit/:id" element={<ProtectedRoute><AdminLayout><AdminEditBlogPage /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/media" element={<ProtectedRoute><AdminLayout><AdminMediaPage /></AdminLayout></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/admin" replace />} />
         </Routes>
         </BrowserRouter>
