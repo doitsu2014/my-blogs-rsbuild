@@ -1,5 +1,17 @@
 apiVersion: v1
 entries:
+  my-blogs:
+  - apiVersion: v2
+    appVersion: 2.0.0
+    created: "2026-01-04T08:12:58.785525544Z"
+    description: A Helm chart for my-blogs (admin side and client side React SPAs
+      with nginx)
+    digest: 77fd5389b271bd7abfe55ef6c833fe2ab4765f09355efa15294723e17a05503c
+    name: my-blogs
+    type: application
+    urls:
+    - https://github.com/doitsu2014/my-blogs-rsbuild/releases/download/my-blogs-2.0.0/my-blogs-2.0.0.tgz
+    version: 2.0.0
   my-blogs-admin-side:
   - apiVersion: v2
     appVersion: 2.0.0
@@ -11,4 +23,4 @@ entries:
     urls:
     - https://github.com/doitsu2014/my-blogs-rsbuild/releases/download/my-blogs-admin-side-2.0.0/my-blogs-admin-side-2.0.0.tgz
     version: 2.0.0
-generated: "2026-01-04T07:53:42.978424722Z"
+generated: "2026-01-04T08:12:58.785536504Z"
