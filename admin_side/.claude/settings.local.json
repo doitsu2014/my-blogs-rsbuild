@@ -9,7 +9,8 @@
       "WebFetch(domain:daisyui.com)",
       "Bash(pnpm add:*)",
       "Bash(pnpm lint:es:*)",
-      "Bash(pnpm exec tsc:*)"
+      "Bash(pnpm exec tsc:*)",
+      "Bash(helm template:*)"
     ]
   }
 }

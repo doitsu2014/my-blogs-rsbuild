@@ -1,0 +1,15 @@
+{{- if .Values.clientSide.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "my-blogs.clientSide.fullname" . }}-config
+  labels:
+    {{- include "my-blogs.clientSide.labels" . | nindent 4 }}
+data:
+  config.js: |
+    window.__APP_CONFIG__ = {
+      graphqlApiUrl: {{ .Values.clientSide.appConfig.graphqlApiUrl | quote }},
+      graphqlCacheApiUrl: {{ .Values.clientSide.appConfig.graphqlCacheApiUrl | quote }},
+      restApiUrl: {{ .Values.clientSide.appConfig.restApiUrl | quote }}
+    };
+{{- end }}

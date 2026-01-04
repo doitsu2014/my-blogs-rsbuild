@@ -6,8 +6,8 @@ on:
     tags:
       - 'helm-v*.*.*'
     paths:
-      - 'admin_side/deployments/charts/**'
-      - '.github/workflows/admin_side/release_helm_charts.yml'
+      - 'deployments/charts/**'
+      - '.github/workflows/release_helm_charts.yml'
 
 jobs:
   release:
@@ -34,6 +34,6 @@ jobs:
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.6.0
         with:
-          charts_dir: admin_side/deployments/charts
+          charts_dir: deployments/charts
         env:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
