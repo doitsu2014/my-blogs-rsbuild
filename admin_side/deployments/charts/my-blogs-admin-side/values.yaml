@@ -4,7 +4,7 @@
 replicaCount: 1
 
 image:
-  repository: registry.hub.docker.com/doitsu2014/my-blogs-admin-side
+  repository: doitsu2014/my-blogs-admin-side
   pullPolicy: Always
   tag: latest
 

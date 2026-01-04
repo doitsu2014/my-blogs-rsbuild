@@ -1,40 +1,39 @@
-name: Release helm chart workflow
+name: Release Helm Charts - Admin Side
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'helm-v*.*.*'
+    paths:
+      - 'admin_side/deployments/charts/**'
+      - '.github/workflows/admin_side/release_helm_charts.yml'
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        # depending on default permission settings for your org (contents being read-only or read-write for workloads), you will have to add permissions
-        # see: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token
-        permissions:
-            contents: write
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4.1.4
-              with:
-                  fetch-depth: 0
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-            - name: Configure Git
-              run: |
-                  git config user.name "$GITHUB_ACTOR"
-                  git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            - name: Configure Git
-              run: |
-                  git config user.name "$GITHUB_ACTOR"
-                  git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-            - name: Install Helm
-              uses: azure/setup-helm@v4
-              env:
-                  GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Run chart-releaser
-              uses: helm/chart-releaser-action@v1.6.0
-              with:
-                  charts_dir: deployments/charts
-              env:
-                  CR_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-                  charts_dir: './deployments/charts/my-blogs/'
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.6.0
+        with:
+          charts_dir: admin_side/deployments/charts
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
