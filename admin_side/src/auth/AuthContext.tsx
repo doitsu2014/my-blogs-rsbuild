@@ -11,6 +11,7 @@ interface AuthContextType {
     name?: string;
     email?: string;
     username?: string;
+    picture?: string;
   } | null;
   login: () => void;
   logout: () => void;
@@ -95,13 +96,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           }, 100);
 
-          // Load user info
-          keycloak.loadUserInfo().then((userInfoData: any) => {
-            setUserInfo({
-              name: userInfoData.name,
-              email: userInfoData.email,
-              username: userInfoData.preferred_username,
-            });
+          // Load user info from token claims
+          const tokenParsed = keycloak.idTokenParsed as any;
+          setUserInfo({
+            name: tokenParsed?.name,
+            email: tokenParsed?.email,
+            username: tokenParsed?.preferred_username,
+            picture: tokenParsed?.avatar,
           });
 
           // Setup token refresh (clear any existing interval first)
