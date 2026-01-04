@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  my-blogs-admin-side:
+  - apiVersion: v2
+    appVersion: 2.0.0
+    created: "2026-01-04T07:53:42.978414072Z"
+    description: A Helm chart for my-blogs admin side (React SPA with nginx)
+    digest: 9ecf091621d7f5d3cd42f36ccd7c98863a5293afde09810507ea99dc0a54ab43
+    name: my-blogs-admin-side
+    type: application
+    urls:
+    - https://github.com/doitsu2014/my-blogs-rsbuild/releases/download/my-blogs-admin-side-2.0.0/my-blogs-admin-side-2.0.0.tgz
+    version: 2.0.0
+generated: "2026-01-04T07:53:42.978424722Z"
