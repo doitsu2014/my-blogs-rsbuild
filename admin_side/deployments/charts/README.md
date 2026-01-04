@@ -1,144 +1,85 @@
-# Overview
+# my-blogs-admin-side Helm Chart
 
-## 1. Testing helm charts
+React SPA admin panel served by nginx with runtime configuration.
 
-Change Directory: `cd deployments/charts`
+## Quick Start
 
 ```bash
-# Run helm uninstall charts, if you did install it before
-helm uninstall my-blogs
+cd admin_side/deployments/charts
 
-# Run helm install charts
-helm install my-blogs ./my-blogs --namespace test
-helm install my-blogs my-blogs -f ./my-blogs/secret.values.yaml --namespace test
+# Install with default values
+helm install my-admin ./my-blogs-admin-side --namespace my-blogs --create-namespace
 
-# Note: please prepare namespace `test` before running helm install
+# Install with custom values
+helm install my-admin ./my-blogs-admin-side -f values-prod.yaml --namespace my-blogs
+
+# Upgrade
+helm upgrade my-admin ./my-blogs-admin-side -f values-prod.yaml --namespace my-blogs
+
+# Uninstall
+helm uninstall my-admin --namespace my-blogs
 ```
 
-There is sample secret values `secret.values.yaml`
+## Configuration
+
+### Runtime App Config
+
+The app configuration is injected at runtime via ConfigMap mounted as `/usr/share/nginx/html/config.js`.
 
 ```yaml
-replicaCount: 1
+appConfig:
+  keycloakUrl: "https://auth.example.com"
+  keycloakRealm: "myrealm"
+  keycloakClientId: "admin-client"
+  keycloakScope: "my-headless-cms-api-all email openid profile"
+  graphqlApiUrl: "https://api.example.com/graphql"
+  graphqlCacheApiUrl: ""
+  restApiUrl: "https://api.example.com"
+  mediaUploadApiUrl: ""
+```
+
+### Example `values-prod.yaml`
+
+```yaml
+replicaCount: 2
 
 image:
-    repository: registry.hub.docker.com/doitsu2014/my-cms
-    pullPolicy: Always
-    tag: 1.0.10
+  repository: doitsu2014/my-blogs-admin-side
+  pullPolicy: Always
+  tag: v1.0.0
 
-nameOverride: ''
-fullnameOverride: ''
-env: []
-podAnnotations: {}
-serviceAnnotations: {}
-
-podSecurityContext:
-    {}
-    # fsGroup: 2000
-
-securityContext:
-    {}
-    # capabilities:
-    #   drop:
-    #   - ALL
-    # readOnlyRootFilesystem: true
-    # runAsNonRoot: true
-    # runAsUser: 1000
-
-service:
-    type: ClusterIP
-    port: 80
-    ports:
-        - port: 80
-          targetPort: http
-          protocol: TCP
-          name: http
-
-container_ports:
-    - name: http
-      containerPort: 80
-      protocol: TCP
+appConfig:
+  keycloakUrl: "https://auth.example.com"
+  keycloakRealm: "production"
+  keycloakClientId: "admin-client"
+  keycloakScope: "my-headless-cms-api-all email openid profile"
+  graphqlApiUrl: "https://api.example.com/graphql"
+  restApiUrl: "https://api.example.com"
 
 ingress:
-    enabled: true
-    className: 'nginx'
-    annotations:
-        nginx.ingress.kubernetes.io/use-regex: 'true'
-        # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-        nginx.ingress.kubernetes.io/proxy-buffering: 'on'
-        nginx.ingress.kubernetes.io/proxy-body-size: '8m'
-        nginx.ingress.kubernetes.io/proxy-buffer-size: '1m'
-        nginx.ingress.kubernetes.io/proxy-buffers-number: '12'
-        nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
-        nginx.ingress.kubernetes.io/affinity: 'cookie'
-    hosts:
-        - host: my-blogs.doitsu.tech
-          paths:
-              - path: /
-                pathType: Prefix
-                backendServicePort: 80
-    tls:
-        []
-        # - secretName: tls-secret
-        #   hosts:
-        #     - chart-example.local
-
-    # For api gateway
-    # enabled: false
-    # className: ""
-    # annotations:
-    #   nginx.ingress.kubernetes.io/use-regex: "true"
-    #   nginx.ingress.kubernetes.io/client-body-buffer-size: 4m
-    #   nginx.ingress.kubernetes.io/proxy-body-size: 8m
-    #   nginx.ingress.kubernetes.io/rewrite-target: "/prefix/$2"
-    #   nginx.ingress.kubernetes.io/app-root: "/prefix"
-    # hosts:
-    #   - host: chart-example.local
-    #     paths:
-    #       - path: /prefix(/|$)(.*)
-    #         pathType: Prefix
-    #         backendServicePort: 5000
-    # tls: []
-    # - secretName: tls-secret
-    #   hosts:
-    #     - chart-example.local
-
-container_readinessProbe: {}
-#   httpGet:
-#     path: /healthz
-#     port: http
-
-container_livenessProbe:
-    {}
-    # httpGet:
-    #   path: /healthz
-    #   port: http
-    # initialDelaySeconds: 15
-    # periodSeconds: 20
-
-secretData:
-    'NONE': 'NONE'
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+  hosts:
+    - host: admin.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: admin-tls
+      hosts:
+        - admin.example.com
 
 resources:
-    {}
-    # We usually recommend not to specify default resources and to leave this as a conscious
-    # choice for the user. This also increases chances charts run on environments with little
-    # resources, such as Minikube. If you do want to specify resources, uncomment the following
-    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-    # limits:
-    #   cpu: 100m
-    #   memory: 128Mi
-    # requests:
-    #   cpu: 100m
-    #   memory: 128Mi
-
-autoscaling:
-    enabled: false
-    minReplicas: 1
-    maxReplicas: 100
-    targetCPUUtilizationPercentage: 80
-    # targetMemoryUtilizationPercentage: 80
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
 ```
+
+## Health Checks
+
+The nginx container exposes `/health` endpoint for liveness and readiness probes.
