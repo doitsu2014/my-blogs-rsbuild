@@ -13,7 +13,7 @@ import { CategoryTypeEnum, type CategoryModel } from '@/domains/category';
 import type { TagModel } from '@/domains/tag';
 import { getApiUrl, authenticatedFetch } from '@/config/api.config';
 import { useAuth } from '@/auth/AuthContext';
-import { Plus, Save, ArrowLeft, Languages, X, FolderOpen, Tag, Globe } from 'lucide-react';
+import { Plus, Save, Languages, X, FolderOpen, Tag, Globe } from 'lucide-react';
 
 const AVAILABLE_LANGUAGES = [{ code: 'vi', displayName: 'Vietnamese (vi)' }];
 
@@ -22,6 +22,7 @@ export default function CategoryForm({ id }: { id?: string }) {
   const { token, keycloak } = useAuth();
   const [fetchingData, setFetchingData] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [fabOpen, setFabOpen] = useState(false);
 
   const {
     register,
@@ -441,33 +442,44 @@ export default function CategoryForm({ id }: { id?: string }) {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+      {/* Action Buttons - FAB */}
+      <div className="fixed bottom-8 right-8 z-50 flex flex-col items-center gap-3">
+        {/* Expandable Buttons */}
+        <div className={`flex flex-col items-center gap-3 transition-all duration-300 ${fabOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+          {/* Cancel Button */}
+          <button
+            type="button"
+            className="btn btn-lg btn-circle shadow-md bg-base-100 hover:bg-base-200"
+            onClick={() => {
+              navigate('/admin/categories');
+              setFabOpen(false);
+            }}
+            disabled={isLoading}
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Save/Update Button */}
+          <button
+            type="submit"
+            className="btn btn-lg btn-circle btn-success shadow-md"
+            disabled={isLoading}
+          >
+            {isSubmitting ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <Save className="w-5 h-5" />
+            )}
+          </button>
+        </div>
+
+        {/* Main FAB Trigger */}
         <button
           type="button"
-          className="btn btn-ghost gap-2 hover:bg-base-200"
-          onClick={() => navigate('/admin/categories')}
-          disabled={isLoading}
+          className={`btn btn-lg btn-circle btn-primary shadow-lg transition-transform duration-300 ${fabOpen ? 'rotate-45' : ''}`}
+          onClick={() => setFabOpen(!fabOpen)}
         >
-          <ArrowLeft className="w-4 h-4" />
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="btn btn-primary flex-1 gap-2 shadow-lg hover:shadow-primary/25"
-          disabled={isLoading}
-        >
-          {isSubmitting ? (
-            <>
-              <span className="loading loading-spinner loading-sm"></span>
-              {id ? 'Updating...' : 'Creating...'}
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              {id ? 'Update Category' : 'Create Category'}
-            </>
-          )}
+          <Plus className="w-5 h-5" />
         </button>
       </div>
     </form>

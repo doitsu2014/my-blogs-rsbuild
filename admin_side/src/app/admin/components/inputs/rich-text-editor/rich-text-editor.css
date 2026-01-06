@@ -24,7 +24,7 @@
   border-color: var(--color-base-300);
   border-radius: 0 0 0.5rem 0.5rem;
   min-height: 400px;
-  font-family: inherit;
+  font-family: 'Roboto', Inter, Avenir, Helvetica, Arial, sans-serif;
 }
 
 /* Editor Content */
