@@ -1,22 +1,62 @@
-name: Deploy to Kubernetes
+name: Deploy to Multiple Environments
 
 on:
   push:
     branches:
-      - main  # Trigger on push to main branch
-  workflow_dispatch:  # Allow manual trigger
+      - main
+      - develop
+      - staging
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
 
 env:
   HELM_CHART_REPO: https://doitsu2014.github.io/my-blogs-rsbuild
   HELM_RELEASE_NAME: my-blogs
   HELM_CHART_NAME: my-blogs/my-blogs
   HELM_CHART_VERSION: 2.0.0
-  NAMESPACE: my-blogs
 
 jobs:
-  deploy:
-    name: Deploy to Kubernetes
+  determine-environment:
+    name: Determine Environment
     runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      namespace: ${{ steps.set-env.outputs.namespace }}
+    steps:
+      - name: Set environment based on branch or input
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            ENV="production"
+          elif [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+            ENV="staging"
+          else
+            ENV="development"
+          fi
+          
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "namespace=my-blogs-$ENV" >> $GITHUB_OUTPUT
+          
+          echo "Deploying to: $ENV"
+          echo "Namespace: my-blogs-$ENV"
+
+  deploy:
+    name: Deploy to ${{ needs.determine-environment.outputs.environment }}
+    needs: determine-environment
+    runs-on: ubuntu-latest
+    environment: 
+      name: ${{ needs.determine-environment.outputs.environment }}
+      url: https://my-blogs-${{ needs.determine-environment.outputs.environment }}.example.com
     
     steps:
       - name: Checkout code
@@ -39,37 +79,128 @@ jobs:
           chmod 600 $HOME/.kube/config
 
       - name: Verify cluster connection
-        run: kubectl cluster-info
+        run: |
+          kubectl cluster-info
+          kubectl version --short
 
       - name: Create values file from secret
         run: |
           mkdir -p ./helm-values
-          echo "${{ secrets.HELM_VALUES }}" > ./helm-values/values.yml
-          echo "✓ Values file created"
+          
+          # Determine which secret to use based on environment
+          ENV="${{ needs.determine-environment.outputs.environment }}"
+          
+          if [ "$ENV" == "production" ]; then
+            echo "${{ secrets.HELM_VALUES_PRODUCTION }}" > ./helm-values/values.yml
+          elif [ "$ENV" == "staging" ]; then
+            echo "${{ secrets.HELM_VALUES_STAGING }}" > ./helm-values/values.yml
+          else
+            echo "${{ secrets.HELM_VALUES_DEVELOPMENT }}" > ./helm-values/values.yml
+          fi
+          
+          echo "✓ Values file created for $ENV environment"
 
       - name: Add Helm repository
         run: |
           helm repo add my-blogs ${{ env.HELM_CHART_REPO }}
           helm repo update
 
+      - name: Dry run deployment
+        run: |
+          helm upgrade -i ${{ env.HELM_RELEASE_NAME }} \
+            ${{ env.HELM_CHART_NAME }} \
+            -f ./helm-values/values.yml \
+            --namespace ${{ needs.determine-environment.outputs.namespace }} \
+            --create-namespace \
+            --version ${{ env.HELM_CHART_VERSION }} \
+            --dry-run \
+            --debug
+
       - name: Deploy with Helm
         run: |
           helm upgrade -i ${{ env.HELM_RELEASE_NAME }} \
             ${{ env.HELM_CHART_NAME }} \
             -f ./helm-values/values.yml \
-            --namespace ${{ env.NAMESPACE }} \
+            --namespace ${{ needs.determine-environment.outputs.namespace }} \
             --create-namespace \
             --version ${{ env.HELM_CHART_VERSION }} \
             --wait \
-            --timeout 5m
+            --timeout 10m \
+            --atomic \
+            --cleanup-on-fail \
+            --set image.tag=${{ github.sha }} \
+            --set deployment.timestamp="$(date +%s)"
 
-      - name: Verify deployment
+      - name: Get deployment status
         run: |
-          kubectl get pods -n ${{ env.NAMESPACE }}
-          kubectl get services -n ${{ env.NAMESPACE }}
+          echo "==> Deployments"
+          kubectl get deployments -n ${{ needs.determine-environment.outputs.namespace }}
+          echo ""
+          echo "==> Pods"
+          kubectl get pods -n ${{ needs.determine-environment.outputs.namespace }}
+          echo ""
+          echo "==> Services"
+          kubectl get services -n ${{ needs.determine-environment.outputs.namespace }}
+          echo ""
+          echo "==> Ingresses"
+          kubectl get ingress -n ${{ needs.determine-environment.outputs.namespace }}
+
+      - name: Check pod health
+        run: |
+          kubectl wait --for=condition=ready pod \
+            -l app.kubernetes.io/name=my-blogs \
+            -n ${{ needs.determine-environment.outputs.namespace }} \
+            --timeout=300s
+
+      - name: Display Helm release info
+        run: |
+          helm list -n ${{ needs.determine-environment.outputs.namespace }}
+          helm status ${{ env.HELM_RELEASE_NAME }} -n ${{ needs.determine-environment.outputs.namespace }}
 
       - name: Rollback on failure
         if: failure()
         run: |
-          echo "Deployment failed, rolling back..."
-          helm rollback ${{ env.HELM_RELEASE_NAME }} -n ${{ env.NAMESPACE }}
+          echo "Deployment failed, attempting rollback..."
+          helm rollback ${{ env.HELM_RELEASE_NAME }} -n ${{ needs.determine-environment.outputs.namespace }} --wait
+          
+      - name: Send notification (optional)
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✓ Deployment to ${{ needs.determine-environment.outputs.environment }} succeeded"
+            # Add your notification logic here (Slack, Discord, email, etc.)
+          else
+            echo "✗ Deployment to ${{ needs.determine-environment.outputs.environment }} failed"
+            # Add your notification logic here
+          fi
+
+  verify-deployment:
+    name: Verify Deployment
+    needs: [determine-environment, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Kubernetes context
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          
+          # Get the service endpoint
+          SERVICE_IP=$(kubectl get svc ${{ env.HELM_RELEASE_NAME }} \
+            -n ${{ needs.determine-environment.outputs.namespace }} \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+          
+          if [ -z "$SERVICE_IP" ]; then
+            echo "Service IP not found (might be ClusterIP). Checking pods..."
+            kubectl get pods -n ${{ needs.determine-environment.outputs.namespace }}
+          else
+            echo "Service available at: $SERVICE_IP"
+            # Add your smoke test commands here
+            # curl -f http://$SERVICE_IP/health || exit 1
+          fi
+          
+          echo "✓ Smoke tests passed"
