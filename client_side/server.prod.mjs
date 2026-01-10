@@ -24,35 +24,23 @@ const limiter = rateLimit({
 // Apply rate limiting to all routes
 app.use(limiter);
 
-// Import the App component
-async function getApp() {
-  // For now, we'll use a simple inline component since imports are complex
-  return function App() {
-    return React.createElement('div', { className: 'content bg-base-100' },
-      React.createElement('div', { className: 'hero min-h-screen' },
-        React.createElement('div', { className: 'hero-content text-center' },
-          React.createElement('div', { className: 'max-w-md' },
-            React.createElement('h1', { className: 'text-5xl font-bold' }, 'Rsbuild with React'),
-            React.createElement('p', { className: 'py-6 text-lg opacity-70' }, 'Start building amazing things with Rsbuild and DaisyUI.'),
-            React.createElement('button', { className: 'btn btn-primary' }, 'Get Started')
-          )
-        )
-      )
-    );
-  };
-}
-
 const clientPath = join(__dirname, 'dist', 'client');
 
 // SSR route handler MUST come before static middleware
 app.get('/', async (req, res) => {
   try {
-    const App = await getApp();
+    // Simple inline component for SSR - just render a basic shell
+    // The actual routing will be handled by React Router on the client
+    const AppShell = () => {
+      return React.createElement('div', { id: 'app-root' },
+        React.createElement('div', { className: 'loading-indicator' }, 'Loading...')
+      );
+    };
     
-    // Render the app to HTML string
+    // Render the app shell to HTML string
     const markup = renderToString(
       React.createElement(React.StrictMode, null,
-        React.createElement(App)
+        React.createElement(AppShell)
       )
     );
     
