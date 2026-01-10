@@ -7,5 +7,10 @@ document.documentElement.setAttribute('data-theme', 'emerald');
 
 const rootEl = document.getElementById('root');
 if (rootEl) {
-  hydrateRoot(rootEl, <App />);
+  hydrateRoot(
+    rootEl,
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
 }
