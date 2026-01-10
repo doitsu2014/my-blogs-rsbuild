@@ -1,6 +1,9 @@
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github-dark.css';
 import { GET_BLOG_POST_BY_SLUG, GET_BLOG_POSTS } from '../infrastructure/graphql/queries';
 
 interface BlogPost {
@@ -31,6 +34,7 @@ const PostDetailPage = () => {
   const { t } = useTranslation();
   const { lang, slug } = useParams<{ lang: string; slug: string }>();
   const currentLang = lang || 'en';
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const { loading, error, data } = useQuery(GET_BLOG_POST_BY_SLUG, {
     variables: { slug },
@@ -105,6 +109,16 @@ const PostDetailPage = () => {
         )
         .slice(0, 3)
     : [];
+
+  // Apply syntax highlighting to code blocks after content is rendered
+  useEffect(() => {
+    if (contentRef.current && !loading && post) {
+      const codeBlocks = contentRef.current.querySelectorAll('pre code');
+      codeBlocks.forEach((block) => {
+        hljs.highlightElement(block as HTMLElement);
+      });
+    }
+  }, [loading, post, translatedContent]);
 
   return (
     <div className="space-y-8">
@@ -190,7 +204,7 @@ const PostDetailPage = () => {
 
           {/* Post Content - HTML from Tiptap */}
           <article className="prose prose-lg max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: translatedContent }} />
+            <div ref={contentRef} dangerouslySetInnerHTML={{ __html: translatedContent }} />
           </article>
 
           {/* Share Buttons */}
