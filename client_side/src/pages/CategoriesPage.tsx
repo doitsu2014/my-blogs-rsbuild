@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
-import { GET_CATEGORIES } from '../infrastructure/graphql/queries';
+import { GET_CATEGORIES, GET_BLOG_POSTS } from '../infrastructure/graphql/queries';
 
 interface Category {
   id: string;
@@ -46,10 +46,21 @@ const CategoriesPage = () => {
     return category.displayName;
   };
 
+  // Fetch all posts to count posts per category
+  const { data: postsData } = useQuery(GET_BLOG_POSTS);
+  
   // Get blog categories only
   const categories = (data?.categories?.nodes || []).filter(
     (cat: Category) => cat.categoryType === 'Blog'
   );
+
+  // Count posts per category
+  const getPostCount = (categorySlug: string) => {
+    if (!postsData?.posts?.nodes) return 0;
+    return postsData.posts.nodes.filter(
+      (post: any) => post.published && post.categories?.slug === categorySlug
+    ).length;
+  };
 
   // Color palette for categories
   const colors = ['primary', 'secondary', 'accent', 'info', 'success', 'warning'];
@@ -87,7 +98,7 @@ const CategoriesPage = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
             {categories.map((category: Category, index: number) => {
-              const postCount = category.categoryTags?.nodes?.length || 0;
+              const postCount = getPostCount(category.slug);
               const colorClass = colors[index % colors.length];
 
               return (
@@ -130,7 +141,7 @@ const CategoriesPage = () => {
               <div className="stat-value">
                 {categories.reduce(
                   (sum: number, cat: Category) =>
-                    sum + (cat.categoryTags?.nodes?.length || 0),
+                    sum + getPostCount(cat.slug),
                   0
                 )}
               </div>
@@ -143,8 +154,7 @@ const CategoriesPage = () => {
                 {categories.length > 0
                   ? getTranslatedName(
                       categories.reduce((max: Category, cat: Category) =>
-                        (cat.categoryTags?.nodes?.length || 0) >
-                        (max.categoryTags?.nodes?.length || 0)
+                        getPostCount(cat.slug) > getPostCount(max.slug)
                           ? cat
                           : max
                       )

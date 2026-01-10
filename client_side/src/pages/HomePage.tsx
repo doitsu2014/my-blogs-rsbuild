@@ -78,8 +78,7 @@ const HomePage = () => {
   const allPosts = (data?.posts?.nodes?.filter((post: BlogPost) => post.published) || [])
     .sort((a: BlogPost, b: BlogPost) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   
-  const featuredPosts = allPosts.slice(0, 3);
-  const recentPosts = allPosts.slice(0, 10); // Top 10 recent posts
+  const featuredPosts = allPosts.slice(0, 6); // Show top 6 featured posts
 
   return (
     <div className="space-y-8">
@@ -144,37 +143,6 @@ const HomePage = () => {
                   <div className="card-actions justify-end">
                     <Link to={`/${currentLang}/posts/${post.slug}`} className="btn btn-primary btn-sm">
                       {t('readMore')}
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Recent Posts Section - Top 10 Latest */}
-      <section>
-        <h2 className="text-3xl font-bold mb-6">{t('recentPosts')}</h2>
-        <div className="space-y-4">
-          {recentPosts.map((post: BlogPost) => {
-            const translatedTitle = getTranslatedTitle(post);
-            const translatedPreview = getTranslatedPreview(post);
-            return (
-              <div key={post.id} className="card bg-base-200 shadow-md">
-                <div className="card-body">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="card-title">{translatedTitle}</h3>
-                      <p className="text-sm opacity-70 mt-2">
-                        {t('postedOn')} {formatDate(post.createdAt)}
-                      </p>
-                      <p className="mt-2">
-                        {translatedPreview.substring(0, 150)}...
-                      </p>
-                    </div>
-                    <Link to={`/${currentLang}/posts/${post.slug}`} className="btn btn-primary btn-sm ml-4">
-                      {t('read')}
                     </Link>
                   </div>
                 </div>

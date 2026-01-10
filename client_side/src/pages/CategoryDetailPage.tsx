@@ -97,8 +97,10 @@ const CategoryDetailPage = () => {
   const category = data?.categories?.nodes?.[0];
   const categoryName = category ? getTranslatedCategoryName(category) : '';
   
-  // Filter published posts and sort by date (latest first)
-  const posts = (data?.posts?.nodes?.filter((post: BlogPost) => post.published) || [])
+  // Filter published posts for this category and sort by date (latest first)
+  const posts = (data?.posts?.nodes?.filter((post: BlogPost) => 
+    post.published && post.categories?.slug === slug
+  ) || [])
     .sort((a: BlogPost, b: BlogPost) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (

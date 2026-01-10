@@ -143,7 +143,7 @@ export const GET_POSTS_BY_CATEGORY = gql`
         }
       }
     }
-    posts(filters: { categories: { slug: { eq: $categorySlug } } }) {
+    posts {
       nodes {
         id
         title

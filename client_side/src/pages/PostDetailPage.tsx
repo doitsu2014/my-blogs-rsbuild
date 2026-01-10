@@ -188,9 +188,9 @@ const PostDetailPage = () => {
             </figure>
           )}
 
-          {/* Post Content */}
+          {/* Post Content - HTML from Tiptap */}
           <article className="prose prose-lg max-w-none">
-            <div className="whitespace-pre-wrap">{translatedContent}</div>
+            <div dangerouslySetInnerHTML={{ __html: translatedContent }} />
           </article>
 
           {/* Share Buttons */}
