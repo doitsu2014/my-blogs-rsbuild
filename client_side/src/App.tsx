@@ -6,6 +6,8 @@ import { graphqlClient } from './infrastructure/graphql/graphql-client';
 import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
 import CategoriesPage from './pages/CategoriesPage';
+import CategoryDetailPage from './pages/CategoryDetailPage';
+import PostDetailPage from './pages/PostDetailPage';
 
 const App = () => {
   return (
@@ -19,6 +21,8 @@ const App = () => {
             {/* Language-aware routes */}
             <Route path="/:lang" element={<HomePage />} />
             <Route path="/:lang/categories" element={<CategoriesPage />} />
+            <Route path="/:lang/categories/:slug" element={<CategoryDetailPage />} />
+            <Route path="/:lang/posts/:slug" element={<PostDetailPage />} />
             
             {/* Fallback for unknown routes */}
             <Route path="*" element={<Navigate to="/en" replace />} />

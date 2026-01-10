@@ -1,5 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 
 const AVATAR_URL = 'https://my-cms-api.ducth.dev/media/wwlkmlklf2-duc-tran-png.png';
 
@@ -9,8 +10,14 @@ const Header = () => {
   const navigate = useNavigate();
   const currentLang = lang || 'en';
 
+  // Sync i18n with URL language parameter
+  useEffect(() => {
+    if (i18n.language !== currentLang) {
+      i18n.changeLanguage(currentLang);
+    }
+  }, [currentLang, i18n]);
+
   const handleLanguageChange = (newLang: string) => {
-    i18n.changeLanguage(newLang);
     const currentPath = window.location.pathname;
     const pathWithoutLang = currentPath.replace(`/${currentLang}`, '');
     navigate(`/${newLang}${pathWithoutLang || ''}`);

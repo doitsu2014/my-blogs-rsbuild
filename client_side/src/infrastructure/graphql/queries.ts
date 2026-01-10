@@ -66,6 +66,14 @@ export const GET_BLOG_POSTS = gql`
             }
           }
         }
+        postTranslations {
+          nodes {
+            languageCode
+            title
+            previewContent
+            content
+          }
+        }
       }
     }
   }
@@ -102,6 +110,57 @@ export const GET_BLOG_POST_BY_SLUG = gql`
               name
               slug
             }
+          }
+        }
+        postTranslations {
+          nodes {
+            languageCode
+            title
+            previewContent
+            content
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Query to get posts by category slug
+ */
+export const GET_POSTS_BY_CATEGORY = gql`
+  query GetPostsByCategory($categorySlug: String!) {
+    categories(filters: { slug: { eq: $categorySlug } }) {
+      nodes {
+        id
+        displayName
+        slug
+        categoryTranslations {
+          nodes {
+            languageCode
+            displayName
+          }
+        }
+      }
+    }
+    posts(filters: { categories: { slug: { eq: $categorySlug } } }) {
+      nodes {
+        id
+        title
+        previewContent
+        thumbnailPaths
+        slug
+        published
+        createdAt
+        categories {
+          displayName
+          slug
+        }
+        postTranslations {
+          nodes {
+            languageCode
+            title
+            previewContent
           }
         }
       }

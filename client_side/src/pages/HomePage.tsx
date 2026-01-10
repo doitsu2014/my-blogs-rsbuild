@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { GET_BLOG_POSTS } from '../infrastructure/graphql/queries';
 
 const AVATAR_URL = 'https://my-cms-api.ducth.dev/media/wwlkmlklf2-duc-tran-png.png';
@@ -17,6 +17,14 @@ interface BlogPost {
   categories?: {
     displayName: string;
     slug: string;
+  };
+  postTranslations?: {
+    nodes: Array<{
+      languageCode: string;
+      title: string;
+      content?: string;
+      previewContent?: string;
+    }>;
   };
 }
 
@@ -44,9 +52,34 @@ const HomePage = () => {
     return undefined;
   };
 
-  const posts = data?.posts?.nodes?.filter((post: BlogPost) => post.published) || [];
-  const featuredPosts = posts.slice(0, 3);
-  const recentPosts = posts.slice(3, 6);
+  // Get translated title
+  const getTranslatedTitle = (post: BlogPost) => {
+    if (currentLang !== 'en' && post.postTranslations?.nodes) {
+      const translation = post.postTranslations.nodes.find(
+        (t) => t.languageCode === currentLang
+      );
+      if (translation?.title) return translation.title;
+    }
+    return post.title;
+  };
+
+  // Get translated preview
+  const getTranslatedPreview = (post: BlogPost) => {
+    if (currentLang !== 'en' && post.postTranslations?.nodes) {
+      const translation = post.postTranslations.nodes.find(
+        (t) => t.languageCode === currentLang
+      );
+      if (translation?.previewContent) return translation.previewContent;
+    }
+    return post.previewContent;
+  };
+
+  // Filter and sort posts - published only, sorted by date (latest first)
+  const allPosts = (data?.posts?.nodes?.filter((post: BlogPost) => post.published) || [])
+    .sort((a: BlogPost, b: BlogPost) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  
+  const featuredPosts = allPosts.slice(0, 3);
+  const recentPosts = allPosts.slice(0, 10); // Top 10 recent posts
 
   return (
     <div className="space-y-8">
@@ -87,27 +120,31 @@ const HomePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {featuredPosts.map((post: BlogPost) => {
             const thumbnailUrl = getThumbnailUrl(post);
+            const translatedTitle = getTranslatedTitle(post);
+            const translatedPreview = getTranslatedPreview(post);
             return (
               <div key={post.id} className="card bg-base-200 shadow-xl">
                 {thumbnailUrl && (
                   <figure>
                     <img
                       src={thumbnailUrl}
-                      alt={post.title}
+                      alt={translatedTitle}
                       className="h-48 w-full object-cover"
                     />
                   </figure>
                 )}
                 <div className="card-body">
-                  <h3 className="card-title">{post.title}</h3>
+                  <h3 className="card-title">{translatedTitle}</h3>
                   {post.categories && (
                     <div className="badge badge-primary">{post.categories.displayName}</div>
                   )}
                   <p>
-                    {post.previewContent.substring(0, 100)}...
+                    {translatedPreview.substring(0, 100)}...
                   </p>
                   <div className="card-actions justify-end">
-                    <button className="btn btn-primary btn-sm">{t('readMore')}</button>
+                    <Link to={`/${currentLang}/posts/${post.slug}`} className="btn btn-primary btn-sm">
+                      {t('readMore')}
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -116,28 +153,34 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Recent Posts Section */}
+      {/* Recent Posts Section - Top 10 Latest */}
       <section>
         <h2 className="text-3xl font-bold mb-6">{t('recentPosts')}</h2>
         <div className="space-y-4">
-          {recentPosts.map((post: BlogPost) => (
-            <div key={post.id} className="card bg-base-200 shadow-md">
-              <div className="card-body">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="card-title">{post.title}</h3>
-                    <p className="text-sm opacity-70 mt-2">
-                      {t('postedOn')} {formatDate(post.createdAt)}
-                    </p>
-                    <p className="mt-2">
-                      {post.previewContent.substring(0, 150)}...
-                    </p>
+          {recentPosts.map((post: BlogPost) => {
+            const translatedTitle = getTranslatedTitle(post);
+            const translatedPreview = getTranslatedPreview(post);
+            return (
+              <div key={post.id} className="card bg-base-200 shadow-md">
+                <div className="card-body">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="card-title">{translatedTitle}</h3>
+                      <p className="text-sm opacity-70 mt-2">
+                        {t('postedOn')} {formatDate(post.createdAt)}
+                      </p>
+                      <p className="mt-2">
+                        {translatedPreview.substring(0, 150)}...
+                      </p>
+                    </div>
+                    <Link to={`/${currentLang}/posts/${post.slug}`} className="btn btn-primary btn-sm ml-4">
+                      {t('read')}
+                    </Link>
                   </div>
-                  <button className="btn btn-primary btn-sm ml-4">{t('read')}</button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>
