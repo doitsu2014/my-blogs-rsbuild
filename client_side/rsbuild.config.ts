@@ -4,12 +4,20 @@ import { pluginReact } from '@rsbuild/plugin-react';
 export default defineConfig({
   html: {
     // Set DaisyUI theme on the html element
-    htmlAttrs: {
-      'data-theme': 'emerald',
-    },
+    template: './index.html',
   },
   server: {
     port: 3001,
+  },
+  source: {
+    entry: {
+      index: './src/index.client.tsx',
+    },
+  },
+  output: {
+    distPath: {
+      root: 'dist/client',
+    },
   },
   resolve: {
     alias: {
