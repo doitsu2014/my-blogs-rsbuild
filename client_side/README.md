@@ -1,41 +1,76 @@
-# ClientSide Module
+# Client Side Module
 
-A **Module Federation 2.0 Remote Module** that exposes React components for consumption by the shell application. This module demonstrates how to build and expose micro-frontend components that can be dynamically loaded at runtime.
+A **standalone React application** with **Server-Side Rendering (SSR)** and **DaisyUI** styling. This module demonstrates modern web development practices with RSBuild, React 19, and production-ready SSR.
 
 ## 📋 Overview
 
-The ClientSide module is a standalone React application that serves as a **remote module** in the Module Federation architecture. It exposes components that can be consumed by other applications (like the shell app) without requiring a rebuild of the host application.
+The Client Side module is a standalone React application that runs on port 3001. It features:
+
+- ✅ **Server-Side Rendering (SSR)** for improved performance and SEO
+- ✅ **DaisyUI + Tailwind CSS 4** for beautiful, responsive UI
+- ✅ **React 19** with modern features
+- ✅ **RSBuild** for fast, optimized builds
+- ✅ **TypeScript** for type safety
 
 ### Key Characteristics
 
-- **Remote Module**: Exposes components via Module Federation
 - **Port**: Runs on `http://localhost:3001`
-- **Exposed Components**: `./App` component available for external consumption
-- **Standalone**: Can run independently for development and testing
-- **Shared Dependencies**: Uses singleton React instances to prevent version conflicts
+- **SSR**: Server-rendered HTML for faster initial page load
+- **Hydration**: Client-side React takes over after SSR
+- **Theme**: DaisyUI Emerald theme
+- **Standalone**: Independent application, not a micro-frontend
 
-## 🏗️ Module Federation Configuration
+## 🏗️ Architecture
 
-This module is configured as a **remote** in the Module Federation architecture:
+### SSR Implementation
 
-```typescript
-{
-  name: 'client_side',
-  exposes: {
-    './App': './src/App.tsx',  // Exposed component
-  },
-  shared: {
-    react: { singleton: true },
-    'react-dom': { singleton: true },
-  }
-}
+The application uses a custom Express server for SSR:
+
+```
+┌─────────────────┐
+│  Request  → /   │
+└────────┬────────┘
+         │
+    ┌────▼─────────────────┐
+    │  Express Server      │
+    │  (server.prod.mjs)   │
+    └────┬─────────────────┘
+         │
+    ┌────▼──────────────────┐
+    │  Server-Side Render   │
+    │  React → HTML String  │
+    └────┬──────────────────┘
+         │
+    ┌────▼──────────────────┐
+    │  Inject into Template │
+    │  + Static Assets      │
+    └────┬──────────────────┘
+         │
+    ┌────▼──────────────────┐
+    │  Send HTML to Client  │
+    └────┬──────────────────┘
+         │
+    ┌────▼──────────────────┐
+    │  Client Hydration     │
+    │  React takes over     │
+    └───────────────────────┘
 ```
 
-### Exposed Components
+### File Structure
 
-| Export Path | Source File   | Description             |
-| ----------- | ------------- | ----------------------- |
-| `./App`     | `src/App.tsx` | Main client_side component |
+```
+client_side/
+├── src/
+│   ├── App.tsx              # Main React component
+│   ├── App.css              # Tailwind + DaisyUI styles
+│   ├── index.client.tsx     # Client entry (hydration)
+│   └── index.server.tsx     # Server entry (SSR)
+├── index.html               # HTML template with SSR placeholder
+├── server.prod.mjs          # Production SSR server
+├── rsbuild.config.ts        # RSBuild configuration
+├── tailwind.config.ts       # Tailwind CSS 4 config
+└── postcss.config.mjs       # PostCSS config
+```
 
 ## 🚀 Getting Started
 
@@ -52,13 +87,13 @@ pnpm install
 
 ### Development
 
-Start the development server:
+Start the development server (client-only, no SSR):
 
 ```bash
 pnpm dev
 ```
 
-The module will be available at `http://localhost:3001` and can be consumed by the shell application.
+The app will be available at `http://localhost:3001`
 
 ### Build
 
@@ -68,161 +103,197 @@ Build for production:
 pnpm build
 ```
 
-This generates:
+This generates optimized client bundles in `dist/client/`
 
-- Optimized production bundles
-- Module Federation manifest (`mf-manifest.json`)
-- Remote entry files for consumption
+### Production Server (SSR)
 
-### Preview
-
-Preview the production build:
+Start the production SSR server:
 
 ```bash
-pnpm preview
+pnpm start
 ```
+
+The SSR server will:
+1. Serve pre-rendered HTML at `http://localhost:3001`
+2. Serve static assets from `/static`
+3. Enable React hydration on the client
 
 ## 📦 Scripts
 
-| Script    | Command              | Description                             |
-| --------- | -------------------- | --------------------------------------- |
-| `dev`     | `rsbuild dev --open` | Start development server with auto-open |
-| `build`   | `rsbuild build`      | Build for production                    |
-| `preview` | `rsbuild preview`    | Preview production build                |
-| `lint`    | `eslint .`           | Lint code with ESLint                   |
-| `format`  | `prettier --write .` | Format code with Prettier               |
+| Script    | Command              | Description                        |
+| --------- | -------------------- | ---------------------------------- |
+| `dev`     | `rsbuild dev --open` | Start development server (no SSR)  |
+| `build`   | `rsbuild build`      | Build for production               |
+| `start`   | `node server.prod.mjs` | Start production SSR server     |
+| `preview` | `rsbuild preview`    | Preview production build (no SSR)  |
+| `lint`    | `eslint .`           | Lint code with ESLint              |
+| `format`  | `prettier --write .` | Format code with Prettier          |
 
 ## 🛠️ Technology Stack
 
-- **React**: 19.1.x - UI framework
+- **React**: 19.1.x - UI framework with latest features
 - **TypeScript**: 5.9.x - Type safety
-- **Rsbuild**: 1.5.x - Build tool
-- **Module Federation**: 0.21.x - Micro-frontend architecture
+- **RSBuild**: 1.5.x - Fast build tool
+- **Express**: 5.2.x - SSR server
+- **DaisyUI**: 5.5.x - UI component library
+- **Tailwind CSS**: 4.1.x - Utility-first CSS framework
 - **ESLint**: 9.x - Code linting
 - **Prettier**: 3.x - Code formatting
 
-## 📡 Consuming This Module
+## 🎨 Styling with DaisyUI
 
-### In the Shell App
+### Theme Configuration
 
-The shell application consumes this module using the manifest-based approach:
+The app uses DaisyUI's **Emerald** theme, configured in:
 
-```typescript
-// rsbuild.config.ts (shell)
-{
-  remotes: {
-    client_side: 'client_side@http://localhost:3001/mf-manifest.json';
-  }
+1. **HTML Template** (`index.html`):
+```html
+<html lang="en" data-theme="emerald">
+```
+
+2. **CSS** (`src/App.css`):
+```css
+@plugin 'daisyui' {
+  themes: emerald --default, dark;
 }
 ```
 
-### Dynamic Import
-
+3. **Client Entry** (`src/index.client.tsx`):
 ```typescript
-import { lazy } from 'react';
-
-const ClientSideApp = lazy(() => import('client_side/App'));
-
-function App() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <ClientSideApp />
-    </Suspense>
-  );
-}
+document.documentElement.setAttribute('data-theme', 'emerald');
 ```
 
-## 🔧 Configuration Files
+### Using DaisyUI Components
 
-### `rsbuild.config.ts`
+```tsx
+// Example from App.tsx
+<div className="hero min-h-screen">
+  <div className="hero-content text-center">
+    <div className="max-w-md">
+      <h1 className="text-5xl font-bold">Title</h1>
+      <p className="py-6 text-lg opacity-70">Description</p>
+      <button className="btn btn-primary">Get Started</button>
+    </div>
+  </div>
+</div>
+```
 
-- Configures Rsbuild and Module Federation plugin
-- Sets server port to 3001
-- Defines exposed components
-- Configures shared dependencies
+## 🔧 SSR Configuration
 
-### `tsconfig.json`
+### Server Setup
 
-- TypeScript configuration for React 19
-- JSX transform configuration
-- Path aliases and module resolution
+The production server (`server.prod.mjs`) handles:
 
-### `eslint.config.mjs`
+1. **SSR Route** (`GET /`):
+   - Renders React components to HTML string
+   - Injects rendered markup into HTML template
+   - Sends complete HTML to client
 
-- ESLint 9 flat config format
-- React and React Hooks rules
-- TypeScript integration
+2. **Static Assets** (`/static/*`):
+   - Serves JavaScript bundles
+   - Serves CSS stylesheets
+   - Enables caching
+
+### Key SSR Concepts
+
+- **Server Rendering**: `renderToString()` converts React to HTML
+- **Hydration**: `hydrateRoot()` attaches React to existing HTML
+- **Template Injection**: Placeholder `<!--app-content-->` is replaced with rendered markup
 
 ## 🎯 Development Guidelines
 
-### Adding New Exposed Components
+### Adding New Components
 
-1. Create your component in `src/`
-2. Update `rsbuild.config.ts` to expose it:
+1. Create component in `src/`
+2. Import and use in `App.tsx`
+3. Rebuild with `pnpm build`
+4. Test SSR with `pnpm start`
 
-```typescript
-exposes: {
-  './App': './src/App.tsx',
-  './NewComponent': './src/NewComponent.tsx', // Add this
-}
-```
+### Styling Best Practices
 
-3. Rebuild the module
-4. Update type definitions in the shell app
+- ✅ Use DaisyUI utility classes
+- ✅ Use Tailwind CSS for custom styling
+- ✅ Follow responsive design patterns
+- ✅ Test on different screen sizes
+- ⚠️ Avoid inline styles
+- ⚠️ Keep CSS bundle size optimized
 
-### Shared Dependencies
+### SSR Considerations
 
-This module shares React and React-DOM with the host application using the **singleton pattern**. This ensures:
-
-- Only one instance of React is loaded
-- No version conflicts between modules
-- Reduced bundle size
-- Consistent state management
-
-### Best Practices
-
-- ✅ Keep exposed components self-contained
-- ✅ Use TypeScript for type safety
-- ✅ Test components in standalone mode
-- ✅ Document component props and usage
-- ✅ Use semantic versioning for releases
-- ✅ Minimize external dependencies
-- ⚠️ Avoid breaking changes to exposed APIs
-- ⚠️ Keep bundle size optimized
+- ✅ Keep components stateless when possible
+- ✅ Use `useEffect` for client-only code
+- ✅ Avoid browser APIs in render methods
+- ✅ Test both SSR and client hydration
+- ⚠️ Don't access `window` or `document` during render
+- ⚠️ Be careful with side effects
 
 ## 🧪 Testing
 
-Test the module independently:
+### Test SSR Output
 
 ```bash
-# Start the dev server
-pnpm dev
+# Start the SSR server
+pnpm build && pnpm start
 
-# In another terminal, verify the manifest
-curl http://localhost:3001/mf-manifest.json
+# In another terminal, verify SSR
+curl http://localhost:3001 | grep "content bg-base-100"
 ```
+
+### Verify Hydration
+
+1. Start SSR server: `pnpm start`
+2. Open browser DevTools
+3. Check for React DevTools extension
+4. Verify no hydration warnings in console
 
 ## 📚 Learn More
 
-- [Module Federation Documentation](https://module-federation.io/guide/start/index.html)
-- [Rsbuild Documentation](https://rsbuild.dev/)
+- [RSBuild SSR Guide](https://rsbuild.rs/guide/advanced/ssr)
+- [DaisyUI Documentation](https://daisyui.com/docs/intro/)
+- [Tailwind CSS 4](https://tailwindcss.com/)
 - [React 19 Documentation](https://react.dev/)
-- [Module Federation Remote Configuration](https://module-federation.io/configure/remotes.html)
+- [Server-Side Rendering with React](https://react.dev/reference/react-dom/server)
 
-## 🤝 Integration
+## 🚀 Deployment
 
-This module is designed to work with:
+### Production Build Steps
 
-- **Shell App**: Main host application (port 3000)
-- **Other Remotes**: Can be combined with other micro-frontends
+1. Build the application:
+```bash
+pnpm build
+```
+
+2. The `dist/client` directory contains:
+   - `index.html` - HTML template
+   - `static/` - JavaScript and CSS bundles
+
+3. Deploy using Node.js:
+```bash
+node server.prod.mjs
+```
+
+### Environment Variables
+
+```bash
+PORT=3001  # Server port (default: 3001)
+```
+
+### Deployment Platforms
+
+The SSR setup works with:
+- Node.js hosting (Heroku, Railway, Render)
+- Docker containers
+- Cloud platforms (AWS, GCP, Azure)
+- Kubernetes
 
 ## 📝 Notes
 
-- The module must be running for the shell app to consume it in development
-- Production builds generate static manifests that can be deployed independently
-- Changes to exposed components require a rebuild
-- Type definitions are auto-generated for TypeScript support in consuming apps
+- SSR improves initial page load and SEO
+- Hydration happens automatically on the client
+- DaisyUI theme is set on the `<html>` element
+- Static assets are served from `/static` path
+- Development mode (`pnpm dev`) does not use SSR
 
 ---
 
-Part of the **My Blogs** micro-frontend project
+Part of the **My Blogs - RSBuild** project
