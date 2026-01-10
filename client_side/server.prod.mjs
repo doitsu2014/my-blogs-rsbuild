@@ -3,8 +3,6 @@ import { rateLimit } from 'express-rate-limit';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,20 +24,30 @@ app.use(limiter);
 
 const clientPath = join(__dirname, 'dist', 'client');
 
+// Import the server render function
+let serverRender;
+try {
+  const serverModule = await import('./dist/server/index.mjs');
+  serverRender = serverModule.default;
+} catch (err) {
+  console.error('Failed to load server bundle:', err);
+  serverRender = null;
+}
+
 // Helper function to get meta tags based on route
 const getMetaTags = (url) => {
   const pathParts = url.split('/').filter(Boolean);
   const lang = pathParts[0] || 'en';
-  
+
   // Default meta tags
   let title = "Duc Tran's Blog - Web Development & Technology";
   let description = "Hi! I'm Duc Tran, a passionate developer sharing insights about web development, technology, and software engineering.";
   let ogImage = "https://my-cms-api.ducth.dev/media/wwlkmlklf2-duc-tran-png.png";
-  
+
   // Customize based on route
   if (pathParts.length > 1) {
     const section = pathParts[1];
-    
+
     if (section === 'categories') {
       if (pathParts.length > 2) {
         // Category detail page
@@ -60,50 +68,50 @@ const getMetaTags = (url) => {
       description = `Read about ${postTitle} on Duc Tran's Blog`;
     }
   }
-  
+
   return { title, description, ogImage, lang };
 };
 
-// SSR route handler for all routes - MUST come before static middleware
-app.get('*', async (req, res) => {
-  // Skip API and static file requests
-  if (req.path.startsWith('/static/') || req.path.startsWith('/api/')) {
-    return;
+// Serve static files from the client build FIRST
+app.use('/static', express.static(join(clientPath, 'static')));
+
+// SSR route handler for all routes
+app.get('/{*splat}', async (req, res) => {
+  // Skip static file requests
+  if (req.path.startsWith('/static/') || req.path.includes('.')) {
+    return res.sendFile(join(clientPath, req.path));
   }
-  
+
   try {
     const { title, description, ogImage, lang } = getMetaTags(req.path);
-    
-    // Simple inline component for SSR - just render a basic shell
-    // The actual routing will be handled by React Router on the client
-    const AppShell = () => {
-      return React.createElement('div', { id: 'app-root' },
-        React.createElement('div', { className: 'loading-indicator' }, 'Loading...')
-      );
-    };
-    
-    // Render the app shell to HTML string
-    const markup = renderToString(
-      React.createElement(React.StrictMode, null,
-        React.createElement(AppShell)
-      )
-    );
-    
+
+    // Render the app to HTML string using the server bundle
+    let markup = '';
+    if (serverRender) {
+      try {
+        markup = serverRender(req.path);
+      } catch (renderErr) {
+        console.error('SSR render error:', renderErr);
+        // Fall back to empty content for client-side rendering
+        markup = '';
+      }
+    }
+
     // Read the HTML template
     const templatePath = join(clientPath, 'index.html');
     const template = readFileSync(templatePath, 'utf-8');
-    
+
     // Replace placeholders with dynamic content
     let html = template
       .replace('<!--app-content-->', markup)
       .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
       .replace(/<html lang="en"/, `<html lang="${lang}"`);
-    
+
     // Add meta description if not present
     if (!html.includes('<meta name="description"')) {
       html = html.replace('</head>', `<meta name="description" content="${description}" />\n    </head>`);
     }
-    
+
     // Add Open Graph tags if not present
     if (!html.includes('og:title')) {
       const ogTags = `
@@ -119,7 +127,7 @@ app.get('*', async (req, res) => {
     `;
       html = html.replace('</head>', `${ogTags}</head>`);
     }
-    
+
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
   } catch (err) {
     console.error('SSR Error:', err);
@@ -128,11 +136,8 @@ app.get('*', async (req, res) => {
   }
 });
 
-// Serve static files from the client build (exclude index.html)
-app.use('/static', express.static(join(clientPath, 'static')));
-
 app.listen(port, () => {
   console.log(`Production SSR server running at http://localhost:${port}`);
   console.log(`Client path: ${clientPath}`);
+  console.log(`Server render available: ${!!serverRender}`);
 });
-
