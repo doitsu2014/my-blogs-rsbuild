@@ -1,14 +1,21 @@
+const AVATAR_URL = 'https://my-cms-api.ducth.dev/media/wwlkmlklf2-duc-tran-png.png';
+
 const HomePage = () => {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
       <div className="hero min-h-[60vh] bg-base-200 rounded-lg">
         <div className="hero-content text-center">
-          <div className="max-w-md">
-            <h1 className="text-5xl font-bold">Welcome to My Blog</h1>
+          <div className="max-w-2xl">
+            <div className="avatar mb-6">
+              <div className="w-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                <img src={AVATAR_URL} alt="Duc Tran" />
+              </div>
+            </div>
+            <h1 className="text-5xl font-bold">Welcome to Duc Tran's Blog</h1>
             <p className="py-6 text-lg">
-              Discover amazing articles, tutorials, and insights about web
-              development, technology, and more.
+              Hi! I'm Duc Tran, a passionate developer sharing insights about web
+              development, technology, and software engineering.
             </p>
             <button className="btn btn-primary">Explore Articles</button>
           </div>
