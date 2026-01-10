@@ -1,31 +1,32 @@
 import { gql } from '@apollo/client';
 
 /**
- * Query to get all categories with translations
+ * Query to get all blog categories with translations
  */
 export const GET_CATEGORIES = gql`
-  query GetCategories {
-    categories {
+  query GetBlogCategories {
+    categories(filters: { categoryType: { eq: Blog }, parentId: { is_null: "true" } }) {
       nodes {
         id
         displayName
         slug
         categoryType
         createdAt
-        translations {
-          nodes {
-            id
-            languageCode
-            displayName
-          }
-        }
-        tags {
+        categoryTags {
           nodes {
             tags {
               id
               name
               slug
             }
+          }
+        }
+        categoryTranslations {
+          nodes {
+            id
+            languageCode
+            displayName
+            slug
           }
         }
       }
@@ -34,34 +35,29 @@ export const GET_CATEGORIES = gql`
 `;
 
 /**
- * Query to get blog posts with translations
+ * Query to get blog posts with pagination
  */
 export const GET_BLOG_POSTS = gql`
-  query GetBlogPosts($limit: Int, $offset: Int) {
-    blogs(first: $limit, offset: $offset, orderBy: CREATED_AT_DESC) {
+  query GetPosts {
+    posts {
       nodes {
         id
         title
+        previewContent
+        thumbnailPaths
         slug
-        contentMarkdown
+        published
+        createdBy
         createdAt
-        updatedAt
-        isPublished
-        thumbnailUrl
-        translations {
-          nodes {
-            id
-            languageCode
-            title
-            contentMarkdown
-          }
-        }
-        category {
-          id
+        lastModifiedBy
+        lastModifiedAt
+        categoryId
+        categories {
           displayName
           slug
         }
-        tags {
+        rowVersion
+        postTags {
           nodes {
             tags {
               id
@@ -71,7 +67,6 @@ export const GET_BLOG_POSTS = gql`
           }
         }
       }
-      totalCount
     }
   }
 `;
@@ -80,35 +75,33 @@ export const GET_BLOG_POSTS = gql`
  * Query to get a single blog post by slug
  */
 export const GET_BLOG_POST_BY_SLUG = gql`
-  query GetBlogPostBySlug($slug: String!) {
-    blogBySlug(slug: $slug) {
-      id
-      title
-      slug
-      contentMarkdown
-      createdAt
-      updatedAt
-      isPublished
-      thumbnailUrl
-      translations {
-        nodes {
-          id
-          languageCode
-          title
-          contentMarkdown
-        }
-      }
-      category {
+  query GetPostBySlug($slug: String!) {
+    posts(filters: { slug: { eq: $slug } }) {
+      nodes {
         id
-        displayName
+        title
+        previewContent
+        thumbnailPaths
         slug
-      }
-      tags {
-        nodes {
-          tags {
-            id
-            name
-            slug
+        content
+        published
+        createdBy
+        createdAt
+        lastModifiedBy
+        lastModifiedAt
+        categoryId
+        categories {
+          displayName
+          slug
+        }
+        rowVersion
+        postTags {
+          nodes {
+            tags {
+              id
+              name
+              slug
+            }
           }
         }
       }

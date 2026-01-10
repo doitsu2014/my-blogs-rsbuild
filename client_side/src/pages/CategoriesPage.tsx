@@ -8,18 +8,20 @@ interface Category {
   displayName: string;
   slug: string;
   categoryType: string;
-  translations?: {
+  categoryTranslations?: {
     nodes: Array<{
       id: string;
       languageCode: string;
       displayName: string;
+      slug: string;
     }>;
   };
-  tags?: {
+  categoryTags?: {
     nodes: Array<{
       tags: {
         id: string;
         name: string;
+        slug: string;
       };
     }>;
   };
@@ -35,8 +37,8 @@ const CategoriesPage = () => {
 
   // Helper to get translated name
   const getTranslatedName = (category: Category) => {
-    if (currentLang !== 'en' && category.translations?.nodes) {
-      const translation = category.translations.nodes.find(
+    if (currentLang !== 'en' && category.categoryTranslations?.nodes) {
+      const translation = category.categoryTranslations.nodes.find(
         (t) => t.languageCode === currentLang
       );
       if (translation?.displayName) return translation.displayName;
@@ -85,7 +87,7 @@ const CategoriesPage = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
             {categories.map((category: Category, index: number) => {
-              const postCount = category.tags?.nodes?.length || 0;
+              const postCount = category.categoryTags?.nodes?.length || 0;
               const colorClass = colors[index % colors.length];
 
               return (
@@ -128,7 +130,7 @@ const CategoriesPage = () => {
               <div className="stat-value">
                 {categories.reduce(
                   (sum: number, cat: Category) =>
-                    sum + (cat.tags?.nodes?.length || 0),
+                    sum + (cat.categoryTags?.nodes?.length || 0),
                   0
                 )}
               </div>
@@ -141,8 +143,8 @@ const CategoriesPage = () => {
                 {categories.length > 0
                   ? getTranslatedName(
                       categories.reduce((max: Category, cat: Category) =>
-                        (cat.tags?.nodes?.length || 0) >
-                        (max.tags?.nodes?.length || 0)
+                        (cat.categoryTags?.nodes?.length || 0) >
+                        (max.categoryTags?.nodes?.length || 0)
                           ? cat
                           : max
                       )

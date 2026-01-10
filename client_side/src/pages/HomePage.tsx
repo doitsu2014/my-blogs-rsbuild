@@ -9,18 +9,14 @@ interface BlogPost {
   id: string;
   title: string;
   slug: string;
-  contentMarkdown: string;
+  previewContent: string;
+  content?: string;
   createdAt: string;
-  thumbnailUrl?: string;
-  translations?: {
-    nodes: Array<{
-      id: string;
-      languageCode: string;
-      title: string;
-    }>;
-  };
-  category?: {
+  thumbnailPaths?: string[];
+  published: boolean;
+  categories?: {
     displayName: string;
+    slug: string;
   };
 }
 
@@ -30,20 +26,7 @@ const HomePage = () => {
   const currentLang = lang || 'en';
 
   // Fetch blog posts
-  const { loading, error, data } = useQuery(GET_BLOG_POSTS, {
-    variables: { limit: 6, offset: 0 },
-  });
-
-  // Helper to get translated title
-  const getTranslatedTitle = (post: BlogPost) => {
-    if (currentLang !== 'en' && post.translations?.nodes) {
-      const translation = post.translations.nodes.find(
-        (t) => t.languageCode === currentLang
-      );
-      if (translation?.title) return translation.title;
-    }
-    return post.title;
-  };
+  const { loading, error, data } = useQuery(GET_BLOG_POSTS);
 
   // Helper to format date
   const formatDate = (dateString: string) => {
@@ -53,8 +36,17 @@ const HomePage = () => {
     );
   };
 
-  const featuredPosts = data?.blogs?.nodes?.slice(0, 3) || [];
-  const recentPosts = data?.blogs?.nodes?.slice(3, 6) || [];
+  // Get thumbnail URL
+  const getThumbnailUrl = (post: BlogPost) => {
+    if (post.thumbnailPaths && post.thumbnailPaths.length > 0) {
+      return `https://my-cms-api.ducth.dev/media/${post.thumbnailPaths[0]}`;
+    }
+    return undefined;
+  };
+
+  const posts = data?.posts?.nodes?.filter((post: BlogPost) => post.published) || [];
+  const featuredPosts = posts.slice(0, 3);
+  const recentPosts = posts.slice(3, 6);
 
   return (
     <div className="space-y-8">
@@ -93,31 +85,34 @@ const HomePage = () => {
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredPosts.map((post: BlogPost) => (
-            <div key={post.id} className="card bg-base-200 shadow-xl">
-              {post.thumbnailUrl && (
-                <figure>
-                  <img
-                    src={post.thumbnailUrl}
-                    alt={getTranslatedTitle(post)}
-                    className="h-48 w-full object-cover"
-                  />
-                </figure>
-              )}
-              <div className="card-body">
-                <h3 className="card-title">{getTranslatedTitle(post)}</h3>
-                {post.category && (
-                  <div className="badge badge-primary">{post.category.displayName}</div>
+          {featuredPosts.map((post: BlogPost) => {
+            const thumbnailUrl = getThumbnailUrl(post);
+            return (
+              <div key={post.id} className="card bg-base-200 shadow-xl">
+                {thumbnailUrl && (
+                  <figure>
+                    <img
+                      src={thumbnailUrl}
+                      alt={post.title}
+                      className="h-48 w-full object-cover"
+                    />
+                  </figure>
                 )}
-                <p>
-                  {post.contentMarkdown.substring(0, 100)}...
-                </p>
-                <div className="card-actions justify-end">
-                  <button className="btn btn-primary btn-sm">{t('readMore')}</button>
+                <div className="card-body">
+                  <h3 className="card-title">{post.title}</h3>
+                  {post.categories && (
+                    <div className="badge badge-primary">{post.categories.displayName}</div>
+                  )}
+                  <p>
+                    {post.previewContent.substring(0, 100)}...
+                  </p>
+                  <div className="card-actions justify-end">
+                    <button className="btn btn-primary btn-sm">{t('readMore')}</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -130,12 +125,12 @@ const HomePage = () => {
               <div className="card-body">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="card-title">{getTranslatedTitle(post)}</h3>
+                    <h3 className="card-title">{post.title}</h3>
                     <p className="text-sm opacity-70 mt-2">
                       {t('postedOn')} {formatDate(post.createdAt)}
                     </p>
                     <p className="mt-2">
-                      {post.contentMarkdown.substring(0, 150)}...
+                      {post.previewContent.substring(0, 150)}...
                     </p>
                   </div>
                   <button className="btn btn-primary btn-sm ml-4">{t('read')}</button>
