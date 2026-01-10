@@ -7,13 +7,10 @@ const Header = () => {
     <header className="navbar bg-base-200 shadow-lg">
       <div className="container mx-auto">
         <div className="flex-1">
-          <Link to="/" className="btn btn-ghost text-xl gap-2">
-            <div className="avatar">
-              <div className="w-10 rounded-full">
-                <img src={AVATAR_URL} alt="Duc Tran" />
-              </div>
+          <Link to="/" className="btn btn-ghost btn-circle avatar">
+            <div className="w-10 rounded-full">
+              <img src={AVATAR_URL} alt="Duc Tran's Blog" />
             </div>
-            <span>Duc Tran's Blog</span>
           </Link>
         </div>
         <div className="flex-none">
