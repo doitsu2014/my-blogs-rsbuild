@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next';
+import { SITE_CONFIG } from '../../config/site.config';
 
 const Footer = () => {
   const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
+  const { socialLinks } = SITE_CONFIG;
 
   return (
     <footer className="footer footer-center p-10 bg-base-200 text-base-content">
@@ -15,7 +17,7 @@ const Footer = () => {
       <nav>
         <div className="grid grid-flow-col gap-4">
           <a
-            href="https://github.com"
+            href={socialLinks.github}
             target="_blank"
             rel="noopener noreferrer"
             className="link link-hover"
@@ -23,7 +25,7 @@ const Footer = () => {
             GitHub
           </a>
           <a
-            href="https://twitter.com"
+            href={socialLinks.twitter}
             target="_blank"
             rel="noopener noreferrer"
             className="link link-hover"
@@ -31,7 +33,7 @@ const Footer = () => {
             Twitter
           </a>
           <a
-            href="https://linkedin.com"
+            href={socialLinks.linkedin}
             target="_blank"
             rel="noopener noreferrer"
             className="link link-hover"

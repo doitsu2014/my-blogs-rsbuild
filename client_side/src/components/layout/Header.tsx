@@ -1,14 +1,19 @@
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
+import { SITE_CONFIG } from '../../config/site.config';
 
-const AVATAR_URL = 'https://my-cms-api.ducth.dev/media/wwlkmlklf2-duc-tran-png.png';
+const SUPPORTED_LANGS = ['en', 'vi'];
 
 const Header = () => {
-  const { lang } = useParams<{ lang: string }>();
+  const location = useLocation();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const currentLang = lang || 'en';
+
+  // Extract language from pathname (e.g., "/en/posts/slug" -> "en")
+  const pathSegments = location.pathname.split('/').filter(Boolean);
+  const langFromPath = pathSegments[0];
+  const currentLang = SUPPORTED_LANGS.includes(langFromPath) ? langFromPath : 'en';
 
   // Sync i18n with URL language parameter
   useEffect(() => {
@@ -28,7 +33,7 @@ const Header = () => {
       <div className="container mx-auto flex justify-between items-center py-2 px-4">
         <Link to={`/${currentLang}`} className="btn btn-ghost btn-circle avatar">
           <div className="w-10 rounded-full">
-            <img src={AVATAR_URL} alt="Duc Tran's Blog" />
+            <img src={SITE_CONFIG.avatarUrl} alt="Duc Tran's Blog" />
           </div>
         </Link>
         <div className="flex items-center gap-4">

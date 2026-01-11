@@ -77,9 +77,10 @@ app.use('/static', express.static(join(clientPath, 'static')));
 
 // SSR route handler for all routes
 app.get('/{*splat}', async (req, res) => {
-  // Skip static file requests
-  if (req.path.startsWith('/static/') || req.path.includes('.')) {
-    return res.sendFile(join(clientPath, req.path));
+  // Static files are already handled by the middleware above
+  // Skip SSR for file requests (e.g., favicon.ico, robots.txt)
+  if (req.path.includes('.') && !req.path.startsWith('/static/')) {
+    return res.status(404).send('Not Found');
   }
 
   try {
