@@ -56,7 +56,12 @@ const CategoryDetailPage = () => {
   // Get thumbnail URL
   const getThumbnailUrl = (post: BlogPost) => {
     if (post.thumbnailPaths && post.thumbnailPaths.length > 0) {
-      return `https://my-cms-api.ducth.dev/media/${post.thumbnailPaths[0]}`;
+      const path = post.thumbnailPaths[0];
+      // If path is already a full URL, return it directly
+      if (path.startsWith('http://') || path.startsWith('https://')) {
+        return path;
+      }
+      return `https://my-cms-api.ducth.dev/media/${path}`;
     }
     return undefined;
   };
