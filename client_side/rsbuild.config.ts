@@ -3,28 +3,60 @@ import { pluginReact } from '@rsbuild/plugin-react';
 
 export default defineConfig({
   html: {
-    // Set DaisyUI theme on the html element
     template: './index.html',
   },
   server: {
     port: 3001,
-  },
-  source: {
-    entry: {
-      index: './src/index.client.tsx',
-    },
-  },
-  output: {
-    distPath: {
-      root: 'dist/client',
-    },
   },
   resolve: {
     alias: {
       '@': './src',
     },
   },
-  plugins: [
-    pluginReact(),
-  ]
+  plugins: [pluginReact()],
+  environments: {
+    // Client-side build
+    web: {
+      source: {
+        entry: {
+          index: './src/index.client.tsx',
+        },
+      },
+      output: {
+        target: 'web',
+        distPath: {
+          root: 'dist/client',
+        },
+      },
+    },
+    // Server-side build for SSR
+    node: {
+      source: {
+        entry: {
+          index: './src/index.server.tsx',
+        },
+      },
+      output: {
+        target: 'node',
+        distPath: {
+          root: 'dist/server',
+        },
+        filename: {
+          js: '[name].mjs',
+        },
+      },
+      tools: {
+        rspack: {
+          output: {
+            library: {
+              type: 'module',
+            },
+          },
+          experiments: {
+            outputModule: true,
+          },
+        },
+      },
+    },
+  },
 });

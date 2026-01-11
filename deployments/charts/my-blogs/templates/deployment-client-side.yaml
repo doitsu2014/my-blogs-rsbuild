@@ -36,10 +36,9 @@ spec:
           ports:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          volumeMounts:
-            - name: config-volume
-              mountPath: /usr/share/nginx/html/config.js
-              subPath: config.js
+          envFrom:
+            - configMapRef:
+                name: {{ include "my-blogs.clientSide.fullname" . }}-config
           {{- if .Values.clientSide.container_readinessProbe }}
           readinessProbe:
             {{- toYaml .Values.clientSide.container_readinessProbe | nindent 12 }}
@@ -62,11 +61,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      volumes:
-        - name: config-volume
-          configMap:
-            name: {{ include "my-blogs.clientSide.fullname" . }}-config
-            items:
-              - key: config.js
-                path: config.js
 {{- end }}

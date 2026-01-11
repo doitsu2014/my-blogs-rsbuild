@@ -1,14 +1,20 @@
-import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
+import { SITE_CONFIG } from '../../config/site.config';
 
-const AVATAR_URL = 'https://my-cms-api.ducth.dev/media/wwlkmlklf2-duc-tran-png.png';
+const SUPPORTED_LANGS = ['en', 'vi'];
+
+// Get current language from URL path
+const getCurrentLang = () => {
+  if (typeof window === 'undefined') return 'en';
+  const pathSegments = window.location.pathname.split('/').filter(Boolean);
+  const langFromPath = pathSegments[0];
+  return SUPPORTED_LANGS.includes(langFromPath) ? langFromPath : 'en';
+};
 
 const Header = () => {
-  const { lang } = useParams<{ lang: string }>();
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const currentLang = lang || 'en';
+  const currentLang = getCurrentLang();
 
   // Sync i18n with URL language parameter
   useEffect(() => {
@@ -17,27 +23,29 @@ const Header = () => {
     }
   }, [currentLang, i18n]);
 
-  const handleLanguageChange = (newLang: string) => {
+  // Build language switch URL (hard navigation)
+  const getLanguageUrl = (newLang: string) => {
+    if (typeof window === 'undefined') return `/${newLang}`;
     const currentPath = window.location.pathname;
     const pathWithoutLang = currentPath.replace(`/${currentLang}`, '');
-    navigate(`/${newLang}${pathWithoutLang || ''}`);
+    return `/${newLang}${pathWithoutLang || ''}`;
   };
 
   return (
     <header className="bg-base-200 shadow-lg">
       <div className="container mx-auto flex justify-between items-center py-2 px-4">
-        <Link to={`/${currentLang}`} className="btn btn-ghost btn-circle avatar">
+        <a href={`/${currentLang}`} className="btn btn-ghost btn-circle avatar">
           <div className="w-10 rounded-full">
-            <img src={AVATAR_URL} alt="Duc Tran's Blog" />
+            <img src={SITE_CONFIG.avatarUrl} alt="Duc Tran's Blog" />
           </div>
-        </Link>
+        </a>
         <div className="flex items-center gap-4">
           <ul className="menu menu-horizontal px-1">
             <li>
-              <Link to={`/${currentLang}`}>{t('home')}</Link>
+              <a href={`/${currentLang}`}>{t('home')}</a>
             </li>
             <li>
-              <Link to={`/${currentLang}/categories`}>{t('categories')}</Link>
+              <a href={`/${currentLang}/categories`}>{t('categories')}</a>
             </li>
           </ul>
           <div className="dropdown dropdown-end">
@@ -46,14 +54,14 @@ const Header = () => {
             </label>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32">
               <li>
-                <button onClick={() => handleLanguageChange('en')} className={currentLang === 'en' ? 'active' : ''}>
+                <a href={getLanguageUrl('en')} className={currentLang === 'en' ? 'active' : ''}>
                   English
-                </button>
+                </a>
               </li>
               <li>
-                <button onClick={() => handleLanguageChange('vi')} className={currentLang === 'vi' ? 'active' : ''}>
+                <a href={getLanguageUrl('vi')} className={currentLang === 'vi' ? 'active' : ''}>
                   Tiếng Việt
-                </button>
+                </a>
               </li>
             </ul>
           </div>

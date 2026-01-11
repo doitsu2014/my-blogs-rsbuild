@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github-dark.css';
@@ -148,16 +148,16 @@ const PostDetailPage = () => {
           <div className="text-sm breadcrumbs">
             <ul>
               <li>
-                <Link to={`/${currentLang}`}>{t('home')}</Link>
+                <a href={`/${currentLang}`}>{t('home')}</a>
               </li>
               <li>
-                <Link to={`/${currentLang}/categories`}>{t('categories')}</Link>
+                <a href={`/${currentLang}/categories`}>{t('categories')}</a>
               </li>
               {post.categories && (
                 <li>
-                  <Link to={`/${currentLang}/categories/${post.categories.slug}`}>
+                  <a href={`/${currentLang}/categories/${post.categories.slug}`}>
                     {post.categories.displayName}
-                  </Link>
+                  </a>
                 </li>
               )}
               <li>{translatedTitle}</li>
@@ -174,12 +174,12 @@ const PostDetailPage = () => {
               {post.categories && (
                 <>
                   <span>•</span>
-                  <Link
-                    to={`/${currentLang}/categories/${post.categories.slug}`}
+                  <a
+                    href={`/${currentLang}/categories/${post.categories.slug}`}
                     className="badge badge-primary"
                   >
                     {post.categories.displayName}
-                  </Link>
+                  </a>
                 </>
               )}
               {post.createdBy && (
@@ -271,12 +271,12 @@ const PostDetailPage = () => {
                           {relatedPreview.substring(0, 80)}...
                         </p>
                         <div className="card-actions justify-end mt-2">
-                          <Link
-                            to={`/${currentLang}/posts/${relatedPost.slug}`}
+                          <a
+                            href={`/${currentLang}/posts/${relatedPost.slug}`}
                             className="btn btn-primary btn-sm"
                           >
                             {t('readMore')}
-                          </Link>
+                          </a>
                         </div>
                       </div>
                     </div>

@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { GET_CATEGORIES, GET_BLOG_POSTS } from '../infrastructure/graphql/queries';
 
 interface Category {
@@ -115,12 +115,12 @@ const CategoriesPage = () => {
                       {category.slug.replace(/-/g, ' ')}
                     </p>
                     <div className="card-actions justify-end mt-4">
-                      <Link
-                        to={`/${currentLang}/categories/${category.slug}`}
+                      <a
+                        href={`/${currentLang}/categories/${category.slug}`}
                         className="btn btn-primary btn-sm"
                       >
                         {t('viewPosts')}
-                      </Link>
+                      </a>
                     </div>
                   </div>
                 </div>
