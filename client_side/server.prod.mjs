@@ -30,15 +30,16 @@ import { dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
 
 // ============================================================================
-// CONFIGURATION (keep in sync with src/config/site.config.ts)
+// CONFIGURATION
+// Read from environment variables (for Kubernetes/Docker) or use defaults
 // ============================================================================
 
 const CONFIG = {
-  siteName: "Duc Tran's Blog",
-  siteUrl: 'https://my-blogs.ducth.dev',
-  avatarUrl: 'https://my-cms-api.ducth.dev/media/wwlkmlklf2-duc-tran-png.png',
-  defaultTitle: "Duc Tran's Blog - Web Development & Technology",
-  defaultDescription: "Hi! I'm Duc Tran, a passionate developer sharing insights about web development, technology, and software engineering.",
+  siteName: process.env.SITE_NAME || "Duc Tran's Blog",
+  siteUrl: process.env.SITE_URL || 'https://my-blogs.ducth.dev',
+  avatarUrl: process.env.AVATAR_URL || 'https://my-cms-api.ducth.dev/media/wwlkmlklf2-duc-tran-png.png',
+  defaultTitle: process.env.DEFAULT_TITLE || "Duc Tran's Blog - Web Development & Technology",
+  defaultDescription: process.env.DEFAULT_DESCRIPTION || "Hi! I'm Duc Tran, a passionate developer sharing insights about web development, technology, and software engineering.",
 };
 
 // ============================================================================

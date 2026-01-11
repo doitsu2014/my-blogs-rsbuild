@@ -35,14 +35,6 @@ const HomePage = () => {
   // Fetch blog posts
   const { loading, error, data } = useQuery(GET_BLOG_POSTS);
 
-  // Helper to format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(
-      currentLang === 'vi' ? 'vi-VN' : 'en-US',
-      { year: 'numeric', month: 'long', day: 'numeric' }
-    );
-  };
-
   // Get thumbnail URL
   const getThumbnailUrl = (post: BlogPost) => {
     if (post.thumbnailPaths && post.thumbnailPaths.length > 0) {
