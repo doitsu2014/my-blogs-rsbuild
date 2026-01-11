@@ -42,10 +42,12 @@ jobs:
         run: kubectl cluster-info
 
       - name: Create values file from secret
+        env:
+          HELM_VALUES: ${{ secrets.HELM_VALUES }}
         run: |
           mkdir -p ./helm-values
-          echo "${{ secrets.HELM_VALUES }}" > ./helm-values/values.yml
-          echo "✓ Values file created"
+          printf '%s\n' "$HELM_VALUES" > ./helm-values/values.yml
+          echo "Values file created"
 
       - name: Add Helm repository
         run: |
