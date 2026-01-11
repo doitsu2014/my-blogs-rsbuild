@@ -107,7 +107,7 @@ export default function BlogForm({ id }: { id?: string }) {
               title: res.data.title,
               previewContent: res.data.previewContent,
               content: res.data.content,
-              thumbnailPaths: res.data.thumbnailPaths,
+              thumbnailPaths: res.data.thumbnailPaths ?? [],
               published: res.data.published,
               tagNames: res.data.tags?.map((tag) => tag.name) ?? [],
               categoryId: res.data.categoryId,
@@ -223,6 +223,44 @@ export default function BlogForm({ id }: { id?: string }) {
     }
   };
 
+  const onFormError = (formErrors: typeof errors) => {
+    // Collect all error messages
+    const errorMessages: string[] = [];
+
+    const extractErrors = (obj: Record<string, unknown>, prefix = '') => {
+      for (const [key, value] of Object.entries(obj)) {
+        if (value && typeof value === 'object') {
+          if ('message' in value && typeof value.message === 'string') {
+            const fieldName = prefix ? `${prefix}.${key}` : key;
+            errorMessages.push(`${fieldName}: ${value.message}`);
+          } else if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              if (item && typeof item === 'object') {
+                extractErrors(item as Record<string, unknown>, `${key}[${index}]`);
+              }
+            });
+          } else {
+            extractErrors(value as Record<string, unknown>, prefix ? `${prefix}.${key}` : key);
+          }
+        }
+      }
+    };
+
+    extractErrors(formErrors as Record<string, unknown>);
+
+    if (errorMessages.length > 0) {
+      // Show first error as main toast, mention if there are more
+      const firstError = errorMessages[0];
+      const moreCount = errorMessages.length - 1;
+      const message = moreCount > 0
+        ? `${firstError} (+${moreCount} more errors)`
+        : firstError;
+      toast.error(message);
+    } else {
+      toast.error('Please fix the form errors before submitting');
+    }
+  };
+
   const addTranslationTab = () => {
     append({
       id: '',
@@ -262,7 +300,7 @@ export default function BlogForm({ id }: { id?: string }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full">
+    <form onSubmit={handleSubmit(onSubmit, onFormError)} className="space-y-6 w-full">
       {/* Main Tabs - Modern Segmented Control */}
       <div className="bg-base-200/50 p-1.5 rounded-2xl inline-flex gap-1 shadow-inner">
         <button

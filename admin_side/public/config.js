@@ -13,5 +13,5 @@ window.__APP_CONFIG__ = {
   graphqlApiUrl: 'https://my-cms-api.ducth.dev/graphql',
   graphqlCacheApiUrl: '',
   restApiUrl: 'https://my-cms-api.ducth.dev',
-  mediaUploadApiUrl: 'https://my-cms-api.ducth.dev',
+  mediaUploadApiUrl: 'https://my-cms-api.ducth.dev/media',
 };

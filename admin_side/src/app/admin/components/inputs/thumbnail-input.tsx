@@ -47,8 +47,9 @@ const ThumbnailsInput: React.FC<ThumbnailsInputProps> = ({
         uploadedUrls.push(getMediaImageUrl(data.data.path));
       }
 
-      setThumbnails((prev) => [...prev, ...uploadedUrls]);
-      onUploadSuccess([...thumbnails, ...uploadedUrls]);
+      const newThumbnails = [...thumbnails, ...uploadedUrls];
+      setThumbnails(newThumbnails);
+      onUploadSuccess(newThumbnails);
     } catch (error) {
       console.error('Error uploading images:', error);
       toast.error('Image upload failed. Please try again.');
@@ -59,8 +60,9 @@ const ThumbnailsInput: React.FC<ThumbnailsInputProps> = ({
 
   const handleUrlSubmit = () => {
     if (thumbnailUrl.trim()) {
-      setThumbnails((prev) => [...prev, thumbnailUrl.trim()]);
-      onUploadSuccess([...thumbnails, thumbnailUrl.trim()]);
+      const newThumbnails = [...thumbnails, thumbnailUrl.trim()];
+      setThumbnails(newThumbnails);
+      onUploadSuccess(newThumbnails);
       setThumbnailUrl('');
     }
   };
