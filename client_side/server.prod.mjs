@@ -119,11 +119,14 @@ app.get('/{*path}', async (req, res) => {
     // 1. Get SEO meta for this page
     const { title, description, lang } = getPageMeta(req.path);
 
-    // 2. Render React app to HTML (or empty string if SSR fails)
+    // 2. Render React app to HTML with Apollo data
     let appHtml = '';
+    let apolloState = null;
     if (serverRender) {
       try {
-        appHtml = serverRender(req.path);
+        const result = await serverRender(req.path);
+        appHtml = result.html || '';
+        apolloState = result.apolloState || null;
       } catch (err) {
         console.error('SSR render error:', err.message);
       }
@@ -131,6 +134,11 @@ app.get('/{*path}', async (req, res) => {
 
     // 3. Read HTML template and inject content
     const template = readFileSync(join(clientPath, 'index.html'), 'utf-8');
+
+    // 4. Build Apollo state script for client hydration
+    const apolloScript = apolloState
+      ? `<script>window.__APOLLO_STATE__=${JSON.stringify(apolloState).replace(/</g, '\\u003c')}</script>`
+      : '';
 
     const html = template
       .replace('<!--app-content-->', appHtml)
@@ -143,6 +151,7 @@ app.get('/{*path}', async (req, res) => {
     <meta property="og:image" content="${CONFIG.avatarUrl}" />
     <meta property="og:url" content="${CONFIG.siteUrl}${req.path}" />
     <meta name="twitter:card" content="summary_large_image" />
+    ${apolloScript}
 </head>`);
 
     res.status(200).type('html').send(html);

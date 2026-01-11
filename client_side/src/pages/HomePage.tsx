@@ -1,9 +1,8 @@
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { GET_BLOG_POSTS } from '../infrastructure/graphql/queries';
-
-const AVATAR_URL = 'https://my-cms-api.ducth.dev/media/wwlkmlklf2-duc-tran-png.png';
+import { SITE_CONFIG } from '../config/site.config';
 
 interface BlogPost {
   id: string;
@@ -88,7 +87,7 @@ const HomePage = () => {
           <div className="max-w-2xl">
             <div className="avatar mb-6">
               <div className="w-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                <img src={AVATAR_URL} alt="Duc Tran" />
+                <img src={SITE_CONFIG.avatarUrl} alt="Duc Tran" />
               </div>
             </div>
             <h1 className="text-5xl font-bold">{t('welcome')}</h1>
@@ -141,9 +140,9 @@ const HomePage = () => {
                     {translatedPreview.substring(0, 100)}...
                   </p>
                   <div className="card-actions justify-end">
-                    <Link to={`/${currentLang}/posts/${post.slug}`} className="btn btn-primary btn-sm">
+                    <a href={`/${currentLang}/posts/${post.slug}`} className="btn btn-primary btn-sm">
                       {t('readMore')}
-                    </Link>
+                    </a>
                   </div>
                 </div>
               </div>

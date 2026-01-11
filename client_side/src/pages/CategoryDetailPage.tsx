@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { GET_POSTS_BY_CATEGORY } from '../infrastructure/graphql/queries';
 
 interface BlogPost {
@@ -109,10 +109,10 @@ const CategoryDetailPage = () => {
       <div className="text-sm breadcrumbs">
         <ul>
           <li>
-            <Link to={`/${currentLang}`}>{t('home')}</Link>
+            <a href={`/${currentLang}`}>{t('home')}</a>
           </li>
           <li>
-            <Link to={`/${currentLang}/categories`}>{t('categories')}</Link>
+            <a href={`/${currentLang}/categories`}>{t('categories')}</a>
           </li>
           <li>{categoryName}</li>
         </ul>
@@ -171,12 +171,12 @@ const CategoryDetailPage = () => {
                   </p>
                   <p>{translatedPreview.substring(0, 120)}...</p>
                   <div className="card-actions justify-end mt-4">
-                    <Link
-                      to={`/${currentLang}/posts/${post.slug}`}
+                    <a
+                      href={`/${currentLang}/posts/${post.slug}`}
                       className="btn btn-primary btn-sm"
                     >
                       {t('readMore')}
-                    </Link>
+                    </a>
                   </div>
                 </div>
               </div>

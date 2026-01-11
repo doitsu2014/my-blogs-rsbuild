@@ -40,9 +40,19 @@ async function startDevServer() {
         return next();
       }
 
-      // Render the app
-      const markup = serverModule.default(req.path);
-      const html = template.replace('<!--app-content-->', markup);
+      // Render the app (now async with Apollo data fetching)
+      const result = await serverModule.default(req.path);
+      const appHtml = result.html || '';
+      const apolloState = result.apolloState || null;
+
+      // Inject Apollo state for client hydration
+      const apolloScript = apolloState
+        ? `<script>window.__APOLLO_STATE__=${JSON.stringify(apolloState).replace(/</g, '\\u003c')}</script>`
+        : '';
+
+      const html = template
+        .replace('<!--app-content-->', appHtml)
+        .replace('</head>', `${apolloScript}</head>`);
 
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(html);
